@@ -4,8 +4,8 @@ import (
 	"log"
 	"strings"
 	"io/ioutil"
-	"github.com/ne-ray/migrago.git/internal"
-	i "github.com/ne-ray/migrago.git/internal/initialize"
+	"github.com/ne-ray/migrago/internal"
+	i "github.com/ne-ray/migrago/internal/initialize"
 )
 
 //MakeDown do revert migrate

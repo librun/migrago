@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/ne-ray/migrago.git/internal/model"
+	"github.com/ne-ray/migrago/internal/model"
 )
 
 //DbBolt instance BoltDB for save migration data

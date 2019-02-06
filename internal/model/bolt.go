@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"github.com/boltdb/bolt"
-	"github.com/ne-ray/migrago.git/internal/helper"
+	"github.com/ne-ray/migrago/internal/helper"
 )
 
 type (

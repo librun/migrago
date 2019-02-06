@@ -5,7 +5,7 @@ import (
 	"os"
 	"io/ioutil"
 	"gopkg.in/yaml.v2"
-	i "github.com/ne-ray/migrago.git/internal/initialize"
+	i "github.com/ne-ray/migrago/internal/initialize"
 	"path/filepath"
 )
 

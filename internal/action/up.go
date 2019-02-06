@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 	"io/ioutil"
-	"github.com/ne-ray/migrago.git/internal"
-	"github.com/ne-ray/migrago.git/internal/model"
-	i "github.com/ne-ray/migrago.git/internal/initialize"
+	"github.com/ne-ray/migrago/internal"
+	"github.com/ne-ray/migrago/internal/model"
+	i "github.com/ne-ray/migrago/internal/initialize"
 )
 
 //MakeUp do migrate up

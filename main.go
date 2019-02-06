@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ne-ray/migrago.git/internal"
-	"github.com/ne-ray/migrago.git/internal/action"
+	"github.com/ne-ray/migrago/internal"
+	"github.com/ne-ray/migrago/internal/action"
 	"gopkg.in/urfave/cli.v1"
 )
 
