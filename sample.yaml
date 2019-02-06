@@ -1,0 +1,13 @@
+projects:
+  you-project:
+    migrations:
+    - migrate: dir/for/migrations
+  
+databases:
+  migrate:
+    type: postgres
+    dsn: "postgres://docker:docker@localhost/postgres?sslmode=disable"
+    schema: "test"
+  stats_clickhouse:
+    type: clickhouse
+    dsn: "clickhouse://docker:docker@localhost/clickhouse?sslmode=disable"
