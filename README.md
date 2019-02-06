@@ -23,10 +23,10 @@
 projects:
   you-project:
     migrations:
-    - migrate: dir/for/migrations
+    - postgres: dir/for/migrations
   
 databases:
-  migrate:
+  postgres:
     type: postgres
     dsn: "postgres://docker:docker@localhost/postgres?sslmode=disable"
     schema: "test"
@@ -47,11 +47,11 @@ databases:
 |Опция|Алиас|Пример|Описание|
 |-----|-----|------|--------|
 |project|-p --project|-p you-project|_Необязательная опция_ Применить миграции только определённого проекта|
-|database|-d --db --database|-d migrate|_Необязательная опция_ Применить миграции только определённой БД|
+|database|-d --db --database|-d postgres|_Необязательная опция_ Применить миграции только определённой БД|
 
 ##### Пример
 ```bash
-./migrate -c config.yaml up -d migrate -p you-project
+./migrago -c config.yaml up -d postgres -p you-project
 ```
 
 #### Откат миграций `down`
@@ -59,12 +59,12 @@ databases:
 |Опция|Пример|Описание|
 |-----|------|--------|
 |project|you-project|_Обязательный аргумент_ имя проекта|
-|db|migrate|_Обязательный аргумент_ имя БД|
+|db|postgres|_Обязательный аргумент_ имя БД|
 |count|1|_Обязательный аргумент_ количество откатываемых миграций|
 
 ##### Пример
 ```bash
-./migrate -c config.yaml down you-project migrate 1
+./migrago -c config.yaml down you-project postgres 1
 ```
 
 ## Требования к файлам миграции
