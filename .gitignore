@@ -5,4 +5,5 @@ vendor
 .idea
 *.iml
 *.out
-vscode
+/vscode
+/example/data/migrations.db

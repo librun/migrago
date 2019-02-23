@@ -1,7 +1,7 @@
 projects:
   you-project:
     migrations:
-    - migrate: dir/for/migrations
+    - migrate: migrations
   
 databases:
   migrate:

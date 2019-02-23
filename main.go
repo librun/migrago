@@ -30,7 +30,7 @@ func main() {
 				cli.StringFlag{Name: `database, db, d`, Usage: `database name`},
 			},
 			Action: func(c *cli.Context) error {
-				if err := internal.InitInstance(c.String("datafile")); err != nil {
+				if err := internal.InitInstance(c.GlobalString("datafile")); err != nil {
 					log.Fatalln(err)
 				}
 				defer internal.DbBolt.Connect.Close()
