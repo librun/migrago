@@ -2,9 +2,10 @@ package storage
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+
+	"gopkg.in/yaml.v2"
 )
 
 type (
@@ -49,7 +50,11 @@ func Init(pathConfigFile string) (Storage, error) {
 		return nil, err
 	}
 
-	s := getStorage(cfg.StorageType)
+	s, err := getStorage(cfg.StorageType)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := s.Init(cfg); err != nil {
 		return nil, err
 	}
@@ -64,7 +69,11 @@ func PreInit(pathConfigFile string) error {
 		return err
 	}
 
-	s := getStorage(cfg.StorageType)
+	s, err := getStorage(cfg.StorageType)
+	if err != nil {
+		return err
+	}
+
 	if err := s.PreInit(cfg); err != nil {
 		return err
 	}
@@ -98,14 +107,16 @@ func parseConfig(path string) (*Config, error) {
 	return &cfg.MigrationStorage, nil
 }
 
-func getStorage(typeS string) Storage {
+func getStorage(typeS string) (Storage, error) {
 	var s Storage
 	switch typeS {
 	case StorageTypeBoltDB:
 		s = &BoltDB{}
 	case StorageTypePostgreSQL:
 		s = &PostgreSQL{}
+	default: // по умолчанию используем boltdb (для обратной совместимости)
+		s = &BoltDB{}
 	}
 
-	return s
+	return s, nil
 }
