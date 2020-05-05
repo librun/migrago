@@ -1,13 +1,14 @@
 package action
 
 import (
-	"database/sql"
 	"errors"
 
-	//	_ "github.com/mattn/go-sqlite3"
+	"database/sql"
+	// init sql drivers
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/kshvakov/clickhouse"
 	_ "github.com/lib/pq"
+	//	_ "github.com/mattn/go-sqlite3"
 )
 
 type (
@@ -15,14 +16,6 @@ type (
 	db struct {
 		typeDB  string
 		connect *sql.DB
-	}
-
-	// dbConfig config for Database
-	dbConfig struct {
-		Name   string
-		Type   string
-		Dsn    string
-		Schema string
 	}
 )
 

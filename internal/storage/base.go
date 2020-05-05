@@ -58,7 +58,7 @@ func Init(pathConfigFile string) (Storage, error) {
 }
 
 // PreInit run preinit function
-func PreInit(pathConfigFile string) (error) {
+func PreInit(pathConfigFile string) error {
 	cfg, err := parseConfig(pathConfigFile)
 	if err != nil {
 		return err
@@ -103,6 +103,8 @@ func getStorage(typeS string) Storage {
 	switch typeS {
 	case StorageTypeBoltDB:
 		s = &BoltDB{}
+	case StorageTypePostgreSQL:
+		s = &PostgreSQL{}
 	}
 
 	return s

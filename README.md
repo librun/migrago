@@ -2,69 +2,104 @@
 
 ## Описание конфига `yaml`
 
+#### Блок хранения миграций `migration_storage`
+
+|Аттрибут|Пример|Обязательный|Описание|
+|--------|------|------------|--------|
+|**storage_type**|postgres|да|Тип БД для хранения миграций (поддерживаемые типы: postgres, boltdb)|
+|**dsn**|postgres://postgres:postgres@localhost:5432/migrago?sslmode=disable|для sql|Только для типа БД `postgres` Реквизиты для подключения к БД|
+|**schema**|public|для postgres|Только для типа БД `postgres` схема для подключения|
+|**path**|data/migrations.db|нет|Только для типа БД `boltdb` путь хранения файла с миграциями|
+
 #### Блок базданных `databases`
 Необходимо указать уникальное имя БД
 
-|Аттрибут|Пример|Описание|
-|--------|--------|------|
-|**type**|postgres|Тип БД (поддерживаемые типы: postgres, mysql, clickhouse, sqlite3)|
-|**dsn**|postgres://docker:docker@localhost/postgres?sslmode=disable|Реквизиты для подключения к БД|
-|**schema**|test|_Необязательный аттрибут_ Только для типа БД `postgres` схема для подключения|
+|Аттрибут|Пример|Обязательный|Описание|
+|--------|------|------------|--------|
+|**type**|postgres|да|Тип БД (поддерживаемые типы: postgres, mysql, clickhouse, sqlite3)|
+|**dsn**|postgres://docker:docker@localhost/postgres?sslmode=disable|да|Реквизиты для подключения к БД|
+|**schema**|test|нет|Только для типа БД `postgres` схема для подключения|
 
 #### Блок проектов `projects`
 Необходимо указать уникальное имя проекта
 
-|Аттрибут|Пример|Описание|
-|--------|--------|------|
-|**migrations**| |Массив Имя БД и путь до миграций|
+|Аттрибут|Описание|
+|--------|------|
+|**migrations**|Массив Имя БД и путь до миграций|
 
 #### Пример конфига
 ```yaml
+migration_storage:
+  storage_type: "postgres" # "boltdb"
+  dsn: "postgres://postgres:postgres@localhost:5432/migrago?sslmode=disable"
+  schema: "public"
+  path: "data/migrations.db"
+
 projects:
-  you-project:
+  project1:
     migrations:
-    - postgres: dir/for/migrations
+    - postgres1: dir/for/migrations_postgres
+    - clickhouse1: dir/for/migrations_clickhouse
   
 databases:
-  postgres:
+  postgres1:
     type: postgres
-    dsn: "postgres://docker:docker@localhost/postgres?sslmode=disable"
+    dsn: "postgres://postgres:postgres@localhost/database?sslmode=disable"
     schema: "test"
-  stats_clickhouse:
+  clickhouse1:
     type: clickhouse
-    dsn: "clickhouse://docker:docker@localhost/clickhouse?sslmode=disable"
+    dsn: "tcp://host1:9000?username=user&password=qwerty&database=clicks"
 ```
 
 ## Описание cli
 #### Глобальные опции
 
-|Опция|Алиас|Пример|Описание|
-|-----|-----|------|--------|
-|config|-c --config| -c sample.yaml| Путь до конфига|
+|Опция|Алиас|Пример|Обязательная|Описание|
+|-----|-----|------|------------|--------|
+|config|-c --config| -c sample.yaml|да|Путь до конфига|
+
+#### Иниализация работы мигратора `init`
+
+Создаёт требуемое окружение (для *postgres* создаст таблицу для миграции, для *boltdb* директорию если её не было)
 
 #### Обновить структуры до последней версии `up`
 ##### Опции
-|Опция|Алиас|Пример|Описание|
-|-----|-----|------|--------|
-|project|-p --project|-p you-project|_Необязательная опция_ Применить миграции только определённого проекта|
-|database|-d --db --database|-d postgres|_Необязательная опция_ Применить миграции только определённой БД|
+|Опция|Алиас|Пример|Обязательная|Описание|
+|-----|-----|------|------------|--------|
+|project|-p --project|-p project1|нет|Применить миграции только определённого проекта|
+|database|-d --db --database|-d postgres1|нет|Применить миграции только определённой БД|
 
 ##### Пример
 ```bash
-./migrago -c config.yaml up -d postgres -p you-project
+./migrago -c config.yaml up -p project1 -d postgres1
 ```
 
 #### Откат миграций `down`
-##### Аргументы
-|Опция|Пример|Описание|
-|-----|------|--------|
-|project|you-project|_Обязательный аргумент_ имя проекта|
-|db|postgres|_Обязательный аргумент_ имя БД|
-|count|1|_Обязательный аргумент_ количество откатываемых миграций|
+##### Опции
+|Опция|Пример|Обязательная|Описание|
+|-----|------|------------|--------|
+|project|project1|да|имя проекта|
+|db|postgres1|да|имя БД|
+|len|1|да|количество откатываемых миграций|
+|no-skip||нет|не пропускать не откатываемые миграции|
 
 ##### Пример
 ```bash
-./migrago -c config.yaml down you-project postgres 1
+./migrago -c config.yaml down -p project1 -d postgres1 -l 1
+```
+
+#### Просмотр применённых миграций `list`
+##### Опции
+|Опция|Пример|Обязательная|Описание|
+|-----|------|------------|--------|
+|project|project1|да|имя проекта|
+|db|postgres1|да|имя БД|
+|len|1|нет|количество выводимых миграций|
+|no-skip||нет|не пропускать не откатываемые миграции|
+
+##### Пример
+```bash
+./migrago -c config.yaml list -p project1 -d postgres1
 ```
 
 ## Требования к файлам миграции

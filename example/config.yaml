@@ -1,11 +1,11 @@
 migration_storage:
-  storage_type: "boltdb"
+  storage_type: "boltdb" # boltdb|postgres
   dsn: "postgres://postgres:postgres@localhost:5432/migrago?sslmode=disable"
   schema: "public"
   path: "example/data/migrations.db"
 
 projects:
-  you-project:
+  project1:
     migrations:
     - example_database_postgresql: example/migrations/postgres
   
@@ -16,4 +16,4 @@ databases:
     schema: "test"
   example_database_clickhouse:
     type: clickhouse
-    dsn: "clickhouse://docker:docker@localhost/clickhouse?sslmode=disable"
+    dsn: "tcp://host1:9000?username=user&password=qwerty&database=clicks"
