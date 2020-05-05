@@ -1,34 +1,53 @@
 package action
 
 import (
-	"log"
-	"strings"
+	"errors"
 	"io/ioutil"
-	"github.com/ne-ray/migrago/internal"
-	i "github.com/ne-ray/migrago/internal/initialize"
+	"log"
+	"strconv"
+	"strings"
+
+	"github.com/ne-ray/migrago/internal/storage"
 )
 
-//MakeDown do revert migrate
-func MakeDown(project *internal.Project, dbName string, rollbackCount int) error {
-	projectMigration, err := project.GetProjectMigration(dbName)
+// MakeDown do revert migrate
+func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rollbackCount int, skipNoRollback bool) error {
+	config, err := initConfig(cfgPath, []string{projectName}, []string{dbName})
 	if err != nil {
 		return err
 	}
-	db, errDB := i.InitDB(projectMigration.Database.Type, projectMigration.Database.Dsn, projectMigration.Database.Schema)
+
+	project, err := config.getProject(projectName)
+	if err != nil {
+		return err
+	}
+
+	if _, err := project.getDB(dbName); err != nil {
+		return err
+	}
+
+	projectMigration, err := project.getProjectMigration(dbName)
+	if err != nil {
+		return err
+	}
+	dbc, errDB := initDB(projectMigration.database)
 	if errDB != nil {
 		return errDB
 	}
-	defer db.Close()
+	defer dbc.close()
 
-	migrations, err := internal.DbBolt.GetLast(project.Name, dbName, rollbackCount)
+	migrations, err := mStorage.GetLast(project.name, dbName, skipNoRollback, &rollbackCount)
 	if err != nil {
 		return err
 	}
 
+	if len(migrations) < rollbackCount {
+		return errors.New("Have " + strconv.Itoa(len(migrations)) + " of " + strconv.Itoa(rollbackCount) + " migration")
+	}
 
 	for _, migrate := range migrations {
 		if migrate.RollFlag {
-			downFile := projectMigration.Path + migrate.FileName + internal.MigratePostfixDown
+			downFile := projectMigration.path + migrate.Version + migratePostfixDown
 			content, err := ioutil.ReadFile(downFile)
 			if err != nil {
 				return err
@@ -37,17 +56,21 @@ func MakeDown(project *internal.Project, dbName string, rollbackCount int) error
 			query := string(content)
 			if strings.TrimSpace(query) != "" {
 				//выполнение всех запросов из текущего файла
-				if errExec := db.Exec(query); errExec != nil {
+				if errExec := dbc.exec(query); errExec != nil {
 					return errExec
 				}
 			}
 		}
 
-		if err := internal.DbBolt.Delete(project.Name, dbName, migrate.MigrationID); err != nil {
+		if err := mStorage.Delete(&migrate); err != nil {
 			return err
 		}
 
-		log.Println("migration: " + migrate.FileName + " complete")
+		if migrate.RollFlag {
+			log.Println("migration: " + migrate.Version + " roolback completed")
+		} else {
+			log.Println("migration: " + migrate.Version + " (not roolback) deleted")
+		}
 	}
 
 	return nil

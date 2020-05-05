@@ -1,23 +1,22 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
-	"strconv"
 
-	"github.com/ne-ray/migrago/internal"
 	"github.com/ne-ray/migrago/internal/action"
+	"github.com/ne-ray/migrago/internal/storage"
 	"gopkg.in/urfave/cli.v1"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "migrago"
-	app.Version = "0.1.0"
+	app.Version = "1.0.0"
 	app.Usage = "cli-migration"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: `config, c`, Usage: `path to configuration file`},
-		cli.StringFlag{Name: `datafile, f`, Usage: `path to migrate data file`},
+		cli.StringFlag{Name: `config, c`, Usage: `path to configuration file`, Required: true},
 	}
 	app.Commands = []cli.Command{
 		{
@@ -30,26 +29,29 @@ func main() {
 				cli.StringFlag{Name: `database, db, d`, Usage: `database name`},
 			},
 			Action: func(c *cli.Context) error {
-				if err := internal.InitInstance(c.GlobalString("datafile")); err != nil {
-					log.Fatalln(err)
+				mStorage, err := storage.Init(c.GlobalString("config"))
+				if err != nil {
+					return err
 				}
-				defer internal.DbBolt.Connect.Close()
+				defer func() {
+					if err := mStorage.Close(); err != nil {
+						log.Println(err)
+					}
+				}()
 
-				projects := []string{}
-				databases := []string{}
+				var project *string
+				var database *string
 				if c.IsSet("project") {
-					projects = append(projects, c.String("project"))
+					p := c.String("project")
+					project = &p
 				}
 				if c.IsSet("database") {
-					databases = append(databases, c.String("database"))
-				}
-				config, err := internal.InitConfig(c.GlobalString("config"), projects, databases)
-				if err != nil {
-					log.Fatalln(err)
+					d := c.String("database")
+					database = &d
 				}
 
-				if err := action.MakeUp(&config); err != nil {
-					log.Fatalln(err)
+				if err := action.MakeUp(mStorage, c.GlobalString("config"), project, database); err != nil {
+					return err
 				}
 
 				log.Println("Migration up is successfully")
@@ -61,39 +63,36 @@ func main() {
 			Name:        "down",
 			Usage:       "Revert (undo) one or multiple migrations",
 			Description: "To revert (undo) one or multiple migrations that have been applied before, you can run this command",
-			ArgsUsage:   "project db count",
+			ArgsUsage:   "",
+			Flags: []cli.Flag{
+				cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
+				cli.StringFlag{Name: `database, db, d`, Usage: `database name`, Required: true},
+				cli.IntFlag{Name: `limit, l`, Usage: `limit revert migrations`, Required: true, Value: 1},
+				cli.BoolFlag{Name: `no-skip`, Usage: `not skip migration with rollback is false`},
+			},
 			Action: func(c *cli.Context) error {
-				if err := internal.InitInstance(c.String("datafile")); err != nil {
-					log.Fatalln(err)
-				}
-				defer internal.DbBolt.Connect.Close()
-
-				if len(c.Args()) < 3 {
-					log.Fatalln("args not complete")
-				}
-				projectName := c.Args().Get(0)
-				dbName := c.Args().Get(1)
-				rollbackCount, err := strconv.Atoi(c.Args().Get(2))
+				mStorage, err := storage.Init(c.GlobalString("config"))
 				if err != nil {
-					log.Fatalln(err)
+					return err
+				}
+				defer func() {
+					if err := mStorage.Close(); err != nil {
+						log.Println(err)
+					}
+				}()
+
+				rollbackCount := c.Int("limit")
+				if rollbackCount < 1 {
+					return errors.New("limit revert migration is not define")
+				}
+				// флаг пропускать неоткатываемые миграции
+				skip := true
+				if c.IsSet("no-skip") {
+					skip = false
 				}
 
-				config, err := internal.InitConfig(c.GlobalString("config"), []string{projectName}, []string{dbName})
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				project, err := config.GetProject(projectName)
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				if _, err := project.GetDB(dbName); err != nil {
-					log.Fatalln(err)
-				}
-
-				if err := action.MakeDown(&project, dbName, rollbackCount); err != nil {
-					log.Fatalln(err)
+				if err := action.MakeDown(mStorage, c.GlobalString("config"), c.String("project"), c.String("database"), rollbackCount, skip); err != nil {
+					return err
 				}
 
 				log.Println("Rollback is successfully")
@@ -101,7 +100,67 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Name:        "list",
+			Usage:       "show list migrations",
+			Description: "Show list migrations that have been applied before, you can run this command",
+			ArgsUsage:   "",
+			Flags: []cli.Flag{
+				cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
+				cli.StringFlag{Name: `database, db, d`, Usage: `database name`, Required: true},
+				cli.IntFlag{Name: `limit, l`, Usage: `limit revert migrations`},
+				cli.BoolFlag{Name: `no-skip`, Usage: `not skip migration with rollback is false`},
+			},
+			Action: func(c *cli.Context) error {
+				mStorage, err := storage.Init(c.GlobalString("config"))
+				if err != nil {
+					return err
+				}
+				defer func() {
+					if err := mStorage.Close(); err != nil {
+						log.Println(err)
+					}
+				}()
+
+				var rollbackCount *int
+				if c.IsSet("limit") {
+					if limit := c.Int("limit"); limit > 0 {
+						rollbackCount = &limit
+					} else {
+						log.Fatalln("limit revert migration is not correct")
+					}
+				}
+				// флаг пропускать неоткатываемые миграции
+				skip := true
+				if c.IsSet("no-skip") {
+					skip = false
+				}
+
+				if err := action.MakeList(mStorage, c.GlobalString("config"), c.String("project"), c.String("database"), rollbackCount, skip); err != nil {
+					log.Fatalln(err)
+				}
+
+				return nil
+			},
+		},
+		{
+			Name:        "init",
+			Usage:       "Initialize storage",
+			Description: "Initialize storage (for example boltdb - create dir, sql - create table with migrations)",
+			ArgsUsage:   "",
+			Action: func(c *cli.Context) error {
+				if err := storage.PreInit(c.GlobalString("config")); err != nil {
+					return err
+				}
+
+				log.Println("init storage is successfully")
+
+				return nil
+			},
+		},
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.Fatalln(err)
+	}
 }
