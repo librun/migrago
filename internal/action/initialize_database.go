@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	// init sql drivers
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/kshvakov/clickhouse"
+	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/lib/pq"
 	//	_ "github.com/mattn/go-sqlite3"
 )
