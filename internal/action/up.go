@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -68,30 +67,42 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 }
 
 func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, projectName string, keys []string) (int, error) {
-	var countMigration int
+	var countCompleted int
+	var countTotal int
 	//откроем соединение с БД
 	dbc, errDB := initDB(migration.database)
 	if errDB != nil {
-		return countMigration, errDB
+		return countCompleted, errDB
 	}
 	// закроеи подключение к БД
 	defer func() {
-		log.Println("Completed migrations: " + strconv.Itoa(countMigration))
+		log.Println("Completed migrations:", countCompleted, "of", countTotal)
 		if err := dbc.close(); err != nil {
 			panic(err)
 		}
 	}()
 
+	// calculate total migrage for run
+	var workKeys []string
 	for _, version := range keys {
+		if haveMigrate, err := mStorage.CheckMigration(projectName, migration.database.name, version); !haveMigrate {
+			workKeys = append(workKeys, version)
+		} else if err != nil {
+			return countCompleted, err
+		}
+	}
+	countTotal = len(workKeys)
+
+	for _, version := range workKeys {
 		if check, err := mStorage.CheckMigration(projectName, migration.database.name, version); check {
 			continue
 		} else if err != nil {
-			return countMigration, err
+			return countCompleted, err
 		}
 
 		content, err := ioutil.ReadFile(migration.path + version + migratePostfixUp)
 		if err != nil {
-			return countMigration, err
+			return countCompleted, err
 		}
 
 		query := string(content)
@@ -99,7 +110,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, pr
 			//выполнение всех запросов из текущего файла
 			if errExec := dbc.exec(query); errExec != nil {
 				log.Println("migration fail: " + version)
-				return countMigration, errExec
+				return countCompleted, errExec
 			}
 		}
 
@@ -118,12 +129,12 @@ func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, pr
 
 		if err := mStorage.Up(post); err != nil {
 			log.Println("migration fail: " + version)
-			return countMigration, err
+			return countCompleted, err
 		}
 
 		log.Println("migration success: " + version)
-		countMigration++
+		countCompleted++
 	}
 
-	return countMigration, nil
+	return countCompleted, nil
 }
