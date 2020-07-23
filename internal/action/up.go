@@ -94,12 +94,6 @@ func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, pr
 	countTotal = len(workKeys)
 
 	for _, version := range workKeys {
-		if check, err := mStorage.CheckMigration(projectName, migration.database.name, version); check {
-			continue
-		} else if err != nil {
-			return countCompleted, err
-		}
-
 		content, err := ioutil.ReadFile(migration.path + version + migratePostfixUp)
 		if err != nil {
 			return countCompleted, err

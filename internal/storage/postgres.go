@@ -81,19 +81,14 @@ func (*PostgreSQL) CreateProjectDB(string, string) error {
 
 // CheckMigration проверить выполнялась ли миграция
 func (p *PostgreSQL) CheckMigration(projectName, dbName, version string) (bool, error) {
-	rows, err := p.connect.Query(
+	row := p.connect.QueryRow(
 		"SELECT count(*) FROM migration WHERE project = $1 AND database = $2 AND version = $3 LIMIT 1",
 		projectName, dbName, version,
 	)
-	if err != nil {
-		return false, err
-	}
 
 	var count int
-	for rows.Next() {
-		if err := rows.Scan(&count); err != nil {
-			return false, err
-		}
+	if err := row.Scan(&count); err != nil {
+		return false, err
 	}
 
 	return count > 0, nil
