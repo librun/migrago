@@ -13,7 +13,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "migrago"
-	app.Version = "1.1.0"
+	app.Version = "1.1.1"
 	app.Usage = "cli-migration"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: `config, c`, Usage: `path to configuration file`, Required: true},
