@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ne-ray/migrago/internal/storage"
+	"github.com/librun/migrago/internal/storage"
 )
 
 // MakeUp do migrate up

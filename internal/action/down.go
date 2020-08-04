@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ne-ray/migrago/internal/storage"
+	"github.com/librun/migrago/internal/storage"
 )
 
 // MakeDown do revert migrate

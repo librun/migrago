@@ -3,7 +3,7 @@ package action
 import (
 	"log"
 
-	"github.com/ne-ray/migrago/internal/storage"
+	"github.com/librun/migrago/internal/storage"
 )
 
 // MakeList show success migrations

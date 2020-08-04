@@ -5,15 +5,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/ne-ray/migrago/internal/action"
-	"github.com/ne-ray/migrago/internal/storage"
+	"github.com/librun/migrago/internal/action"
+	"github.com/librun/migrago/internal/storage"
 	"github.com/urfave/cli"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "migrago"
-	app.Version = "1.1.1"
+	app.Version = "1.0.0"
 	app.Usage = "cli-migration"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: `config, c`, Usage: `path to configuration file`, Required: true},
