@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 
@@ -154,6 +155,43 @@ func main() {
 				}
 
 				log.Println("init storage is successfully")
+
+				return nil
+			},
+		},
+		{
+			Name:        "create",
+			Usage:       "create new migration",
+			Description: "Create new empty migration file in project directory",
+			ArgsUsage:   "",
+			Flags: []cli.Flag{
+				cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
+				cli.StringFlag{Name: `name, n`, Usage: `file name (default: new_migration)`, Required: false},
+				cli.StringFlag{Name: `mode, m`, Usage: `up | down | both (default: up)`, Required: false},
+				cli.StringFlag{Name: `db, d`, Usage: `target db if multiple (default: postgres)`, Required: false},
+			},
+			Action: func(c *cli.Context) error {
+				db := c.String("db")
+				name := c.String("name")
+				mode := c.String("mode")
+				project := c.String("project")
+
+				// prepare params
+				if name == "" {
+					name = "new_migration"
+				}
+				if mode == "" {
+					mode = "up"
+				}
+				if mode != "up" && mode != "down" && mode != "both" {
+					return fmt.Errorf("invalid mode: %s", mode)
+				}
+				if db == "" {
+					db = "postgres"
+				}
+				if err := action.MakeCreate(c.GlobalString("config"), name, mode, project, db); err != nil {
+					log.Fatalln(err)
+				}
 
 				return nil
 			},
