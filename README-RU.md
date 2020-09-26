@@ -17,7 +17,7 @@ Migrago это инструмент для миграций SQL-like баз да
 
 ## Установка из исходников
 
-    go get https://github.com/librun/migrago@v1.0.0
+    go get https://github.com/librun/migrago@v1.1.0
 
 # Использование
 ```text
