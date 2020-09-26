@@ -12,8 +12,8 @@ Migrago это инструмент для миграций SQL-like баз да
 
 ### Linux
 
-    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.0/migrago-0.1.0-amd64_linux.tar.gz" \
-        | tar -zOx "migrago-0.6.0-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
+    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.0/migrago-1.1.0-amd64_linux.tar.gz" \
+        | tar -zOx "migrago-1.1.0-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
 
 ## Установка из исходников
 
