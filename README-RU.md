@@ -1,33 +1,49 @@
-# Мигратор SQL-like Базданных
+Migrago
+=======
 
-## Описание конфига `yaml`
+Migrago это инструмент для миграций SQL-like баз данных.
 
-#### Блок хранения миграций `migration_storage`
+# Установка
 
-|Аттрибут|Пример|Обязательный|Описание|
-|--------|------|------------|--------|
-|**storage_type**|postgres|да|Тип БД для хранения миграций (поддерживаемые типы: postgres, boltdb)|
-|**dsn**|postgres://postgres:postgres@localhost:5432/migrago?sslmode=disable|для sql|Только для типа БД `postgres` Реквизиты для подключения к БД|
-|**schema**|public|для postgres|Только для типа БД `postgres` схема для подключения|
-|**path**|data/migrations.db|нет|Только для типа БД `boltdb` путь хранения файла с миграциями|
+## Установка из релизных бинарников
 
-#### Блок базданных `databases`
-Необходимо указать уникальное имя БД
+Скачайте бинарный файл из подготовленных [релизов](https://github.com/librun/migrago/releases/latest) и поместите его в 
+директорию `$GOPATH/bin`.
 
-|Аттрибут|Пример|Обязательный|Описание|
-|--------|------|------------|--------|
-|**type**|postgres|да|Тип БД (поддерживаемые типы: postgres, mysql, clickhouse, sqlite3)|
-|**dsn**|postgres://docker:docker@localhost/postgres?sslmode=disable|да|Реквизиты для подключения к БД|
-|**schema**|test|нет|Только для типа БД `postgres` схема для подключения|
+### Linux
 
-#### Блок проектов `projects`
-Необходимо указать уникальное имя проекта
+    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.0/migrago-0.1.0-amd64_linux.tar.gz" \
+        | tar -zOx "migrago-0.6.0-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
 
-|Аттрибут|Описание|
-|--------|------|
-|**migrations**|Массив Имя БД и путь до миграций|
+## Установка из исходников
 
-#### Пример конфига
+    go get https://github.com/librun/migrago@v1.0.0
+
+## Использование
+```text
+USAGE:
+   main [global options] command [command options] [arguments...]
+
+COMMANDS:
+   up       Upgrade a database to its latest structure
+   down     Revert (undo) one or multiple migrations
+   list     show list migrations
+   init     Initialize storage
+   create   create new migration
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --config value, -c value  path to configuration file
+   --help, -h                show help
+   --version, -v             print the version
+```
+
+
+# Конфигурация
+
+Мигратор migrago использует файл конфигурации в формате `yaml`.
+
+### Пример файла конфигурации
 ```yaml
 migration_storage:
   storage_type: "postgres" # "boltdb"
@@ -51,7 +67,35 @@ databases:
     dsn: "tcp://host1:9000?username=user&password=qwerty&database=clicks"
 ```
 
-## Описание cli
+## Блоки файла конфигурации
+
+#### Блок хранения миграций `migration_storage`
+
+|Аттрибут|Пример|Обязательный|Описание|
+|--------|------|------------|--------|
+|**storage_type**|postgres|да|Тип БД для хранения миграций (поддерживаемые типы: postgres, boltdb)|
+|**dsn**|postgres://postgres:postgres@localhost:5432/migrago?sslmode=disable|для sql|Только для типа БД `postgres` Реквизиты для подключения к БД|
+|**schema**|public|для postgres|Только для типа БД `postgres` схема для подключения|
+|**path**|data/migrations.db|нет|Только для типа БД `boltdb` путь хранения файла с миграциями|
+
+#### Блок баз данных `databases`
+Необходимо указать уникальное имя БД
+
+|Аттрибут|Пример|Обязательный|Описание|
+|--------|------|------------|--------|
+|**type**|postgres|да|Тип БД (поддерживаемые типы: postgres, mysql, clickhouse, sqlite3)|
+|**dsn**|postgres://docker:docker@localhost/postgres?sslmode=disable|да|Реквизиты для подключения к БД|
+|**schema**|test|нет|Только для типа БД `postgres` схема для подключения|
+
+#### Блок проектов `projects`
+Необходимо указать уникальное имя проекта
+
+|Аттрибут|Описание|
+|--------|------|
+|**migrations**|Массив Имя БД и путь до миграций|
+
+# Описание cli
+
 #### Глобальные опции
 
 |Опция|Алиас|Пример|Обязательная|Описание|
@@ -102,7 +146,7 @@ databases:
 ./migrago -c config.yaml list -p project1 -d postgres1
 ```
 
-## Требования к файлам миграции
+# Требования к файлам миграции
 При указании новой миграции необходимо создать файлы:  
 `%временная метка%`_`%имя миграции%`_up.sql и  
 `%временная метка%`_`%имя миграции%`_down.sql (Если требуется создать откатываемую миграцию)  
