@@ -8,13 +8,18 @@ import (
 
 	"github.com/librun/migrago/internal/action"
 	"github.com/librun/migrago/internal/storage"
+
 	"github.com/urfave/cli"
 )
+
+// Version displays service version in semantic versioning (http://semver.org/).
+// Can be replaced while compiling with flag `-ldflags "-X main.Version=${VERSION}"`
+var Version = "develop"
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "migrago"
-	app.Version = "1.0.0"
+	app.Version = Version
 	app.Usage = "cli-migration"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: `config, c`, Usage: `path to configuration file`, Required: true},
@@ -103,7 +108,7 @@ func main() {
 		},
 		{
 			Name:        "list",
-			Usage:       "show list migrations",
+			Usage:       "Show list migrations",
 			Description: "Show list migrations that have been applied before, you can run this command",
 			ArgsUsage:   "",
 			Flags: []cli.Flag{
@@ -161,7 +166,7 @@ func main() {
 		},
 		{
 			Name:        "create",
-			Usage:       "create new migration",
+			Usage:       "Create new migration",
 			Description: "Create new empty migration file in project directory",
 			ArgsUsage:   "",
 			Flags: []cli.Flag{
@@ -180,15 +185,19 @@ func main() {
 				if name == "" {
 					name = "new_migration"
 				}
+
 				if mode == "" {
 					mode = "up"
 				}
+
 				if mode != "up" && mode != "down" && mode != "both" {
 					return fmt.Errorf("invalid mode: %s", mode)
 				}
+
 				if db == "" {
 					db = "postgres"
 				}
+
 				if err := action.MakeCreate(c.GlobalString("config"), name, mode, project, db); err != nil {
 					log.Fatalln(err)
 				}

@@ -1,2 +1,7 @@
 coverage.txt
 /example/data/migrations.db
+.idea/
+.vscode/
+release/
+migrago
+vendor/

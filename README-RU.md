@@ -19,7 +19,7 @@ Migrago это инструмент для миграций SQL-like баз да
 
     go get https://github.com/librun/migrago@v1.0.0
 
-## Использование
+# Использование
 ```text
 USAGE:
    main [global options] command [command options] [arguments...]
@@ -38,12 +38,17 @@ GLOBAL OPTIONS:
    --version, -v             print the version
 ```
 
+## Глобальные опции
 
-# Конфигурация
+Для работы migrago требуется файл конфигурации. 
 
-Мигратор migrago использует файл конфигурации в формате `yaml`.
+    migrago -c pat/to/config.yaml command 
 
 ### Пример файла конфигурации
+
+<details>
+<summary>config-example.yaml</summary>
+
 ```yaml
 migration_storage:
   storage_type: "postgres" # "boltdb"
@@ -66,10 +71,11 @@ databases:
     type: clickhouse
     dsn: "tcp://host1:9000?username=user&password=qwerty&database=clicks"
 ```
+</details>
 
-## Блоки файла конфигурации
+### migration_storage
 
-#### Блок хранения миграций `migration_storage`
+Блок хранения миграций.
 
 |Аттрибут|Пример|Обязательный|Описание|
 |--------|------|------------|--------|
@@ -78,8 +84,9 @@ databases:
 |**schema**|public|для postgres|Только для типа БД `postgres` схема для подключения|
 |**path**|data/migrations.db|нет|Только для типа БД `boltdb` путь хранения файла с миграциями|
 
-#### Блок баз данных `databases`
-Необходимо указать уникальное имя БД
+### databases
+
+Блок баз данных. Необходимо указывать уникальные имена для баз данных.
 
 |Аттрибут|Пример|Обязательный|Описание|
 |--------|------|------------|--------|
@@ -87,53 +94,88 @@ databases:
 |**dsn**|postgres://docker:docker@localhost/postgres?sslmode=disable|да|Реквизиты для подключения к БД|
 |**schema**|test|нет|Только для типа БД `postgres` схема для подключения|
 
-#### Блок проектов `projects`
-Необходимо указать уникальное имя проекта
+### projects
+
+Блок проектов. Необходимо указывать уникальные имена для проектов.
 
 |Аттрибут|Описание|
 |--------|------|
 |**migrations**|Массив Имя БД и путь до миграций|
 
-# Описание cli
+## Команды
 
-#### Глобальные опции
+### init
+
+Команда init создаёт требуемое окружение для дальнейшей работы migrago. Для *postgres* Будет создана таблица `migration`, 
+в базе данных, которая указана в блоке `migration_storage` файла конфигурации. Для *boltdb* будет содана директория для 
+файла базы данных если её не было.
+
+    $ migrago -c config.yaml init
+    2020/09/26 16:17:38 init storage is successfully
+
+### up
+
+Применение миграций. Может использоваться без дополнительных опций. В этом случае будут выполненыы 
+все доступные миграции всех доступных проектов. 
+
+    $ migrago -c config.yaml up
+    2020/09/26 16:44:15 Project: testproject
+    2020/09/26 16:44:15 ----------
+    2020/09/26 16:44:15 DB: postgres
+    2020/09/26 16:44:15 migration success: 20200427_170000_create_table_test
+    2020/09/26 16:44:15 migration success: 20200925_150000_update_table_test
+    2020/09/26 16:44:15 Completed migrations: 2 of 2
+    2020/09/26 16:44:15 ----------
+    2020/09/26 16:44:15 DB: clickhouse
+    2020/09/26 16:44:15 migration success: 20200123_200800_create_table_test
+    2020/09/26 16:44:15 Completed migrations: 1 of 1
+    2020/09/26 16:44:15 ----------
+    2020/09/26 16:44:15 Migration up is successfully
+
+Можно дополнительно указать проект и базу данных, для которых необходимо выполнить миграции:    
+
+    $ migrago -c config.yaml up -p testproject -d postgres
+    2020/09/26 17:02:46 Project: testproject
+    2020/09/26 17:02:46 ----------
+    2020/09/26 17:02:46 DB: postgres
+    2020/09/26 17:02:46 migration success: 20200427_170000_create_table_test
+    2020/09/26 17:02:46 migration success: 20200925_150000_update_table_test
+    2020/09/26 17:02:46 Completed migrations: 2 of 2
+    2020/09/26 17:02:46 ----------
+    2020/09/26 17:02:46 Migration up is successfully
 
 |Опция|Алиас|Пример|Обязательная|Описание|
 |-----|-----|------|------------|--------|
-|config|-c --config| -c sample.yaml|да|Путь до конфига|
+|project|-p --project|-p testproject|нет|Применить миграции только определённого проекта|
+|database|-d --db --database|-d postgres|нет|Применить миграции только определённой БД|
 
-#### Иниализация работы мигратора `init`
+### down
 
-Создаёт требуемое окружение (для *postgres* создаст таблицу для миграции, для *boltdb* директорию если её не было)
+Откат миграций. Необходимо указать проект, базу данных и количество миграций для отката. Опции `project`, `db` и `len` 
+обязательны. Указанное количество откатываемых мыграций должно быть меньше, либо быть равным количеству существующих 
+миграций для указанных проекта и базы данных. 
 
-#### Обновить структуры до последней версии `up`
-##### Опции
-|Опция|Алиас|Пример|Обязательная|Описание|
-|-----|-----|------|------------|--------|
-|project|-p --project|-p project1|нет|Применить миграции только определённого проекта|
-|database|-d --db --database|-d postgres1|нет|Применить миграции только определённой БД|
+    $ migrago -c config.yaml down -p testproject -d postgres1 -l 1
+    2020/09/26 16:15:10 migration: 20200427_170000_create_table_test roolback completed
+    2020/09/26 16:15:10 migration: 20200925_150000_update_table_test roolback completed
+    2020/09/26 16:15:10 Rollback is successfully
 
-##### Пример
-```bash
-./migrago -c config.yaml up -p project1 -d postgres1
-```
-
-#### Откат миграций `down`
-##### Опции
 |Опция|Пример|Обязательная|Описание|
 |-----|------|------------|--------|
-|project|project1|да|имя проекта|
-|db|postgres1|да|имя БД|
+|project|testproject|да|имя проекта|
+|db|postgres|да|имя БД|
 |len|1|да|количество откатываемых миграций|
 |no-skip||нет|не пропускать не откатываемые миграции|
 
-##### Пример
-```bash
-./migrago -c config.yaml down -p project1 -d postgres1 -l 1
-```
+### list
 
-#### Просмотр применённых миграций `list`
-##### Опции
+Просмотр применённых миграций. Опции `project` и `db` обязательны. 
+
+    $ migrago -c config.yaml list -p testproject -d postgres
+    2020/09/26 16:55:56 List migrations:
+    2020/09/26 16:55:56 migration: 20200427_170000_create_table_test
+    2020/09/26 16:55:56 migration: 20200925_150000_update_table_test
+
 |Опция|Пример|Обязательная|Описание|
 |-----|------|------------|--------|
 |project|project1|да|имя проекта|
@@ -141,19 +183,30 @@ databases:
 |len|1|нет|количество выводимых миграций|
 |no-skip||нет|не пропускать не откатываемые миграции|
 
-##### Пример
-```bash
-./migrago -c config.yaml list -p project1 -d postgres1
-```
+### create #WIP 
+
+Создание новой SQL миграции. Опции `project` и `db` обязательны.
+
+    $ migrago -c config.yaml create -p dashboard -d postgres
+
+|Опция|Пример|Обязательная|Описание|
+|-----|------|------------|--------|
+|project, p|project1|да|имя проекта|
+|db, d|postgres1|да|имя БД|
+|name, n|create_table_user|нет|имя для миграции|
+|mode, m|up|нет|тип создаваемой миграции up/down/both (default: up)|
 
 # Требования к файлам миграции
+
 При указании новой миграции необходимо создать файлы:  
 `%временная метка%`_`%имя миграции%`_up.sql и  
 `%временная метка%`_`%имя миграции%`_down.sql (Если требуется создать откатываемую миграцию)  
 Временная метка в формате: _ГГГГММДДЧЧММСС_  
 
-#### Пример:
-Файл _20190307010200_book_up.sql_
+## Пример:
+
+### Файл _20190307010200_book_up.sql_
+
 ```sql
 CREATE TABLE book
 (
@@ -164,7 +217,8 @@ CREATE TABLE book
 );
 ```
 
-Файл отката миграции _20190307010200_book_down.sql_
+### Файл отката миграции _20190307010200_book_down.sql_
+
 ```sql
 DROP TABLE book;
 ```
