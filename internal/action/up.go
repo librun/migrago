@@ -33,12 +33,12 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 		log.Println("----------")
 		for _, migration := range project.migrations {
 			log.Println("DB: " + migration.database.name)
-			//создаем бакет по имени проекта
+			// создаем бакет по имени проекта
 			if err := mStorage.CreateProjectDB(project.name, migration.database.name); err != nil {
 				return err
 			}
 
-			//список всех файлов
+			// список всех файлов
 			filesInDir, err := ioutil.ReadDir(migration.path)
 			if err != nil {
 				return err
@@ -52,7 +52,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 					keys = append(keys, fileName[:len(fileName)-7])
 				}
 			}
-			//сортируем список миграций по дате создания
+			// сортируем список миграций по дате создания
 			sort.Strings(keys)
 
 			_, err = makeMigrationInDB(mStorage, &migration, project.name, keys)
@@ -69,7 +69,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, projectName string, keys []string) (int, error) {
 	var countCompleted int
 	var countTotal int
-	//откроем соединение с БД
+	// откроем соединение с БД
 	dbc, errDB := initDB(migration.database)
 	if errDB != nil {
 		return countCompleted, errDB
@@ -116,7 +116,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, pr
 			RollFlag:  true,
 		}
 
-		//если файла с окончанием down.sql не существует, то указываем, что эта миграция не откатываемая
+		// если файла с окончанием down.sql не существует, то указываем, что эта миграция не откатываемая
 		if _, err := os.Stat(migration.path + version + migratePostfixDown); os.IsNotExist(err) {
 			post.RollFlag = false
 		}

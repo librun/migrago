@@ -171,36 +171,40 @@ func main() {
 			ArgsUsage:   "",
 			Flags: []cli.Flag{
 				cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
+				cli.StringFlag{Name: `db, d`, Usage: `target db if multiple (default: postgres)`, Required: false},
 				cli.StringFlag{Name: `name, n`, Usage: `file name (default: new_migration)`, Required: false},
 				cli.StringFlag{Name: `mode, m`, Usage: `up | down | both (default: up)`, Required: false},
-				cli.StringFlag{Name: `db, d`, Usage: `target db if multiple (default: postgres)`, Required: false},
 			},
 			Action: func(c *cli.Context) error {
-				db := c.String("db")
-				name := c.String("name")
-				mode := c.String("mode")
 				project := c.String("project")
-
-				// prepare params
-				if name == "" {
-					name = "new_migration"
+				if project == "" {
+					return errors.New("project required")
 				}
 
+				db := c.String("db")
+				if db == "" {
+					return errors.New("database required")
+				}
+
+				name := c.String("name")
+				if name == "" {
+					return errors.New("migration name required")
+				}
+
+				mode := c.String("mode")
 				if mode == "" {
-					mode = "up"
+					mode = "both"
 				}
 
 				if mode != "up" && mode != "down" && mode != "both" {
 					return fmt.Errorf("invalid mode: %s", mode)
 				}
 
-				if db == "" {
-					db = "postgres"
-				}
-
 				if err := action.MakeCreate(c.GlobalString("config"), name, mode, project, db); err != nil {
 					log.Fatalln(err)
 				}
+
+				log.Println("Migration successfully created")
 
 				return nil
 			},

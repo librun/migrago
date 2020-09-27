@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+	"log"
 )
 
 func MakeCreate(cfgPath, name, mode, project, db string) error {
@@ -71,16 +72,21 @@ func MakeCreate(cfgPath, name, mode, project, db string) error {
 func createFile(name, mode, directory string) error {
 	now := time.Now()
 	filename := fmt.Sprintf(
-		"%d%02d%02d_%02d%02d_%s_%s.sql",
+		"%d%02d%02d_%02d%02d%02d_%s_%s.sql",
 		now.Year(),
 		now.Month(),
 		now.Day(),
 		now.Hour(),
 		now.Minute(),
+		now.Second(),
 		name,
 		mode,
 	)
+
 	_, err := os.Create(fmt.Sprintf("%s/%s", directory, filename))
+	if err == nil {
+		log.Printf("migration: %s created", filename)
+	}
 
 	return err
 }

@@ -183,11 +183,14 @@ databases:
 |len|1|нет|количество выводимых миграций|
 |no-skip||нет|не пропускать не откатываемые миграции|
 
-### create #WIP 
+### create
 
-Создание новой SQL миграции. Опции `project` и `db` обязательны.
+Создание новой SQL миграции. Опции `project`, `db` и `name` обязательны.
 
     $ migrago -c config.yaml create -p testproject -d postgres
+    2020/09/27 05:41:40 migration: 20200927_054140_fuck_up.sql created
+    2020/09/27 05:41:40 migration: 20200927_054140_fuck_down.sql created
+    2020/09/27 05:41:40 Migration successfully created
 
 |Опция|Пример|Обязательная|Описание|
 |-----|------|------------|--------|
