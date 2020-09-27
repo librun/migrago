@@ -10,7 +10,7 @@ import (
 	"github.com/librun/migrago/internal/storage"
 )
 
-// MakeDown do revert migrate
+// MakeDown do revert migrate.
 func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rollbackCount int, skipNoRollback bool) error {
 	config, err := initConfig(cfgPath, []string{projectName}, []string{dbName})
 	if err != nil {
@@ -55,13 +55,14 @@ func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 
 			query := string(content)
 			if strings.TrimSpace(query) != "" {
-				//выполнение всех запросов из текущего файла
+				// выполнение всех запросов из текущего файла
 				if errExec := dbc.exec(query); errExec != nil {
 					return errExec
 				}
 			}
 		}
 
+		migrate := migrate
 		if err := mStorage.Delete(&migrate); err != nil {
 			return err
 		}

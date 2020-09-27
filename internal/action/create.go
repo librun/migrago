@@ -4,16 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 
 	"gopkg.in/yaml.v2"
-	"log"
 )
 
 func MakeCreate(cfgPath, name, mode, project, db string) error {
 	// get config
-	cfg := yamlConfig{}
+	cfg := YAMLConfig{}
 	configFile, err := os.Open(cfgPath)
 
 	if err != nil {
@@ -50,16 +50,17 @@ func MakeCreate(cfgPath, name, mode, project, db string) error {
 	if directory == "" {
 		return errors.New("invalid project or db")
 	}
+
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 		if err = os.MkdirAll(directory, 0777); err != nil {
-			return errors.New(fmt.Sprintf("create directory %s error: %s", directory, err))
+			return fmt.Errorf("create directory %s error: %s", directory, err)
 		}
 	}
 
 	// create file
 	if mode == "both" {
 		for _, modeItem := range []string{"up", "down"} {
-			if err = createFile(name, modeItem, directory); err != nil {
+			if err := createFile(name, modeItem, directory); err != nil {
 				return err
 			}
 		}

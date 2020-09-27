@@ -11,7 +11,7 @@ import (
 	"github.com/librun/migrago/internal/storage"
 )
 
-// MakeUp do migrate up
+// MakeUp do migrate up.
 func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string) error {
 	var projects = make([]string, 0)
 	if project != nil {
@@ -47,7 +47,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 			var keys []string
 			for _, f := range filesInDir {
 				fileName := f.Name()
-				//получаем список файлов на создание миграций, если имя короче 8 символов пропускаем
+				// получаем список файлов на создание миграций, если имя короче 8 символов пропускаем
 				if len(fileName) > 7 && fileName[len(fileName)-7:] == migratePostfixUp {
 					keys = append(keys, fileName[:len(fileName)-7])
 				}
@@ -55,7 +55,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 			// сортируем список миграций по дате создания
 			sort.Strings(keys)
 
-			_, err = makeMigrationInDB(mStorage, &migration, project.name, keys)
+			_, err = makeMigrationInDB(mStorage, migration, project.name, keys)
 			log.Println("----------")
 			if err != nil {
 				return err
@@ -66,7 +66,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 	return nil
 }
 
-func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, projectName string, keys []string) (int, error) {
+func makeMigrationInDB(mStorage storage.Storage, migration ProjectMigration, projectName string, keys []string) (int, error) {
 	var countCompleted int
 	var countTotal int
 	// откроем соединение с БД
@@ -101,7 +101,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, pr
 
 		query := string(content)
 		if strings.TrimSpace(query) != "" {
-			//выполнение всех запросов из текущего файла
+			// выполнение всех запросов из текущего файла
 			if errExec := dbc.exec(query); errExec != nil {
 				log.Println("migration fail: " + version)
 				return countCompleted, errExec

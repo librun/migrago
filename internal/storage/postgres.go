@@ -21,7 +21,7 @@ type (
 	}
 )
 
-// Init инициализация соединения с хранилищем
+// Init инициализация соединения с хранилищем.
 func (p *PostgreSQL) Init(cfg *Config) error {
 	var err error
 	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)
@@ -39,7 +39,7 @@ func (p *PostgreSQL) Init(cfg *Config) error {
 	return nil
 }
 
-// PreInit подготовка БД к работе
+// PreInit подготовка БД к работе.
 func (p *PostgreSQL) PreInit(cfg *Config) error {
 	var err error
 	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)
@@ -65,7 +65,7 @@ func (p *PostgreSQL) PreInit(cfg *Config) error {
 	return nil
 }
 
-// Close закрытие соединения с хранилищем
+// Close закрытие соединения с хранилищем.
 func (p *PostgreSQL) Close() error {
 	if p.connect != nil {
 		return p.connect.Close()
@@ -74,12 +74,12 @@ func (p *PostgreSQL) Close() error {
 	return nil
 }
 
-// CreateProjectDB для postgres не требуется
+// CreateProjectDB для postgres не требуется.
 func (*PostgreSQL) CreateProjectDB(string, string) error {
 	return nil
 }
 
-// CheckMigration проверить выполнялась ли миграция
+// CheckMigration проверить выполнялась ли миграция.
 func (p *PostgreSQL) CheckMigration(projectName, dbName, version string) (bool, error) {
 	row := p.connect.QueryRow(
 		"SELECT count(*) FROM migration WHERE project = $1 AND database = $2 AND version = $3 LIMIT 1",
@@ -94,7 +94,7 @@ func (p *PostgreSQL) CheckMigration(projectName, dbName, version string) (bool, 
 	return count > 0, nil
 }
 
-// Up выполнить миграцию
+// Up выполнить миграцию.
 func (p *PostgreSQL) Up(post *Migrate) error {
 	if _, err := p.connect.Exec(
 		"INSERT INTO migration (project, database, version, apply_time, rollback) VALUES ($1, $2, $3, $4, $5)",
@@ -106,7 +106,7 @@ func (p *PostgreSQL) Up(post *Migrate) error {
 	return nil
 }
 
-// GetLast получить список последних миграций
+// GetLast получить список последних миграций.
 func (p *PostgreSQL) GetLast(projectName, dbName string, skipNoRollback bool, limit *int) ([]Migrate, error) {
 	var result = []Migrate{}
 	query := "SELECT project, database, version, apply_time, rollback FROM migration WHERE project = $1 AND database = $2"
@@ -126,6 +126,7 @@ func (p *PostgreSQL) GetLast(projectName, dbName string, skipNoRollback bool, li
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var mi Migrate
@@ -135,12 +136,11 @@ func (p *PostgreSQL) GetLast(projectName, dbName string, skipNoRollback bool, li
 
 		result = append(result, mi)
 	}
-	rows.Close()
 
-	return result, nil
+	return result, rows.Err()
 }
 
-// Delete откатить миграцию
+// Delete откатить миграцию.
 func (p *PostgreSQL) Delete(post *Migrate) error {
 	_, err := p.connect.Exec(
 		"DELETE FROM migration WHERE project = $1 AND database = $2 AND version = $3",

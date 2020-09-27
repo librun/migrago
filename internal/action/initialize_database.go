@@ -1,28 +1,26 @@
 package action
 
 import (
+	"database/sql"
 	"errors"
 
-	"database/sql"
-	// init sql drivers
-	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	//	_ "github.com/mattn/go-sqlite3"
 )
 
 type (
-	// db struct for database
+	// db struct for Database
 	db struct {
 		typeDB  string
 		connect *sql.DB
 	}
 )
 
-// dbTypePostgres const for database postgres
+// dbTypePostgres const for Database postgres.
 const dbTypePostgres = "postgres"
 
-// checkSupportDatabaseType check support database driver
+// checkSupportDatabaseType check support Database driver.
 func checkSupportDatabaseType(dbType string) bool {
 	support := false
 	for _, dbDriver := range sql.Drivers() {
@@ -35,8 +33,8 @@ func checkSupportDatabaseType(dbType string) bool {
 	return support
 }
 
-// initDB initialize connection with database
-func initDB(cfg *database) (*db, error) {
+// initDB initialize connection with Database.
+func initDB(cfg *Database) (*db, error) {
 	dbc := &db{
 		typeDB: cfg.typeDB,
 	}
@@ -62,7 +60,7 @@ func initDB(cfg *database) (*db, error) {
 	return dbc, nil
 }
 
-// Exec run query
+// Exec run query.
 func (dbc *db) exec(query string) error {
 	txn, err := dbc.connect.Begin()
 	if err != nil {
@@ -79,7 +77,7 @@ func (dbc *db) exec(query string) error {
 	return txn.Commit()
 }
 
-// Close close connection
+// Close close connection.
 func (dbc *db) close() error {
 	if err := dbc.connect.Close(); err != nil {
 		return err

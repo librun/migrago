@@ -13,7 +13,7 @@ import (
 )
 
 // Version displays service version in semantic versioning (http://semver.org/).
-// Can be replaced while compiling with flag `-ldflags "-X main.Version=${VERSION}"`
+// Can be replaced while compiling with flag `-ldflags "-X main.Version=${VERSION}"`.
 var Version = "develop"
 
 func main() {
@@ -87,17 +87,28 @@ func main() {
 					}
 				}()
 
+				project := c.String("project")
+				if project == "" {
+					return errors.New("project required")
+				}
+
+				db := c.String("db")
+				if db == "" {
+					return errors.New("database required")
+				}
+
 				rollbackCount := c.Int("limit")
 				if rollbackCount < 1 {
 					return errors.New("limit revert migration is not define")
 				}
+
 				// флаг пропускать неоткатываемые миграции
 				skip := true
 				if c.IsSet("no-skip") {
 					skip = false
 				}
 
-				if err := action.MakeDown(mStorage, c.GlobalString("config"), c.String("project"), c.String("database"), rollbackCount, skip); err != nil {
+				if err := action.MakeDown(mStorage, c.GlobalString("config"), project, db, rollbackCount, skip); err != nil {
 					return err
 				}
 
@@ -128,6 +139,16 @@ func main() {
 					}
 				}()
 
+				project := c.String("project")
+				if project == "" {
+					return errors.New("project required")
+				}
+
+				db := c.String("db")
+				if db == "" {
+					return errors.New("database required")
+				}
+
 				var rollbackCount *int
 				if c.IsSet("limit") {
 					if limit := c.Int("limit"); limit > 0 {
@@ -136,13 +157,14 @@ func main() {
 						log.Fatalln("limit revert migration is not correct")
 					}
 				}
+
 				// флаг пропускать неоткатываемые миграции
 				skip := true
 				if c.IsSet("no-skip") {
 					skip = false
 				}
 
-				if err := action.MakeList(mStorage, c.GlobalString("config"), c.String("project"), c.String("database"), rollbackCount, skip); err != nil {
+				if err := action.MakeList(mStorage, c.GlobalString("config"), project, db, rollbackCount, skip); err != nil {
 					log.Fatalln(err)
 				}
 

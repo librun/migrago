@@ -43,17 +43,14 @@ type (
 	}
 )
 
-// Init init instance for work migrations
+// Init init instance for work migrations.
 func Init(pathConfigFile string) (Storage, error) {
 	cfg, err := parseConfig(pathConfigFile)
 	if err != nil {
 		return nil, err
 	}
 
-	s, err := getStorage(cfg.StorageType)
-	if err != nil {
-		return nil, err
-	}
+	s := getStorage(cfg.StorageType)
 
 	if err := s.Init(cfg); err != nil {
 		return nil, err
@@ -62,17 +59,14 @@ func Init(pathConfigFile string) (Storage, error) {
 	return s, nil
 }
 
-// PreInit run preinit function
+// PreInit run preinit function.
 func PreInit(pathConfigFile string) error {
 	cfg, err := parseConfig(pathConfigFile)
 	if err != nil {
 		return err
 	}
 
-	s, err := getStorage(cfg.StorageType)
-	if err != nil {
-		return err
-	}
+	s := getStorage(cfg.StorageType)
 
 	if err := s.PreInit(cfg); err != nil {
 		return err
@@ -85,29 +79,29 @@ func PreInit(pathConfigFile string) error {
 	return nil
 }
 
-// parseConfig получим часть конфига связанную с хранилищем мигратора
+// parseConfig получим часть конфига связанную с хранилищем мигратора.
 func parseConfig(path string) (*Config, error) {
 	configFile, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("Config open error: %s", err)
+		return nil, fmt.Errorf("config open error: %s", err)
 	}
 	defer configFile.Close()
 
 	configByte, err := ioutil.ReadAll(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("Config read error: %s", err)
+		return nil, fmt.Errorf("config read error: %s", err)
 	}
 
 	cfg := configFull{}
 
 	if err := yaml.Unmarshal(configByte, &cfg); err != nil {
-		return nil, fmt.Errorf("Config format error: %s", err)
+		return nil, fmt.Errorf("config format error: %s", err)
 	}
 
 	return &cfg.MigrationStorage, nil
 }
 
-func getStorage(typeS string) (Storage, error) {
+func getStorage(typeS string) Storage {
 	var s Storage
 	switch typeS {
 	case StorageTypeBoltDB:
@@ -118,5 +112,5 @@ func getStorage(typeS string) (Storage, error) {
 		s = &BoltDB{}
 	}
 
-	return s, nil
+	return s
 }
