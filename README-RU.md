@@ -187,9 +187,9 @@ databases:
 
 Создание новой SQL миграции. Опции `project`, `db` и `name` обязательны.
 
-    $ migrago -c config.yaml create -p testproject -d postgres
-    2020/09/27 05:41:40 migration: 20200927_054140_fuck_up.sql created
-    2020/09/27 05:41:40 migration: 20200927_054140_fuck_down.sql created
+    $ migrago -c config.yaml create -p testproject -d postgres -n create_table_test
+    2020/09/27 05:41:40 migration: 20200927_054140_create_table_test_up.sql created
+    2020/09/27 05:41:40 migration: 20200927_054140_create_table_test_down.sql created
     2020/09/27 05:41:40 Migration successfully created
 
 |Опция|Пример|Обязательная|Описание|
