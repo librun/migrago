@@ -23,12 +23,12 @@ const (
 
 // MakeUp do migrate up.
 func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) error {
-	var projects = make([]string, 0)
+	projects := make([]string, 0)
 	if project != nil {
 		projects = append(projects, *project)
 	}
 
-	var databases = make([]string, 0)
+	databases := make([]string, 0)
 	if dbName != nil {
 		databases = append(databases, *dbName)
 	}
@@ -41,6 +41,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 	for _, project := range cfg.Projects {
 		log.Println("Project: " + project.Name)
 		log.Println("----------")
+
 		for _, migration := range project.Migrations {
 			log.Println("DB: " + migration.Database.Name)
 			// создаем бакет по имени проекта
@@ -55,6 +56,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 			}
 
 			var keys []string
+
 			for _, f := range filesInDir {
 				fileName := f.Name()
 				// получаем список файлов на создание миграций, если имя короче 8 символов пропускаем
@@ -62,11 +64,11 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 					keys = append(keys, fileName[:len(fileName)-7])
 				}
 			}
+
 			// сортируем список миграций по дате создания
 			sort.Strings(keys)
 
 			_, err = makeMigrationInDB(mStorage, migration, project.Name, keys)
-			log.Println("----------")
 			if err != nil {
 				return err
 			}
@@ -77,23 +79,27 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 }
 
 func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigration, projectName string, keys []string) (int, error) {
+	defer log.Println("----------")
+
 	var countCompleted int
 	var countTotal int
-	// откроем соединение с БД
+
 	dbc, errDB := database.NewDB(migration.Database)
 	if errDB != nil {
 		return countCompleted, errDB
 	}
-	// закроеи подключение к БД
+
 	defer func() {
 		log.Println("Completed migrations:", countCompleted, "of", countTotal)
+
 		if err := dbc.Close(); err != nil {
 			panic(err)
 		}
 	}()
 
-	// calculate total migrage for run
+	// Calculate total migrations to run.
 	var workKeys []string
+
 	for _, version := range keys {
 		if haveMigrate, err := mStorage.CheckMigration(projectName, migration.Database.Name, version); !haveMigrate {
 			workKeys = append(workKeys, version)
@@ -101,6 +107,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 			return countCompleted, err
 		}
 	}
+
 	countTotal = len(workKeys)
 
 	for _, version := range workKeys {

@@ -51,6 +51,7 @@ func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 	for _, migrate := range migrations {
 		if migrate.RollFlag {
 			downFile := projectMigration.Path + migrate.Version + migratePostfixDown
+
 			content, err := ioutil.ReadFile(downFile)
 			if err != nil {
 				return err

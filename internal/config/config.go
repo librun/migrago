@@ -72,8 +72,10 @@ func NewConfig(path string, projects, databases []string) (Config, error) {
 
 	projectDelete := false
 	projectCurrent := map[string]bool{}
+
 	if len(projects) > 0 {
 		projectDelete = true
+
 		for _, projectName := range projects {
 			projectCurrent[projectName] = true
 		}
@@ -81,8 +83,10 @@ func NewConfig(path string, projects, databases []string) (Config, error) {
 
 	dbDelete := false
 	dbCurrent := map[string]bool{}
+
 	if len(databases) > 0 {
 		dbDelete = true
+
 		for _, projectName := range databases {
 			dbCurrent[projectName] = true
 		}

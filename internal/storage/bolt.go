@@ -28,6 +28,7 @@ func (b *BoltDB) Init(cfg *Config) error {
 	}
 
 	var err error
+
 	b.connect, err = bolt.Open(cfg.Path, 0600, nil)
 	if err != nil {
 		return err
@@ -81,11 +82,7 @@ func (b *BoltDB) CreateProjectDB(projectName, dbName string) error {
 		return nil
 	})
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // CheckMigration проверить выполнялась ли миграция.
@@ -95,11 +92,13 @@ func (b *BoltDB) CheckMigration(projectName, dbName, version string) (bool, erro
 	}
 
 	found := false
+
 	err := b.connect.View(func(tx *bolt.Tx) error {
 		bp := tx.Bucket([]byte(projectName))
 		if bp == nil {
 			return errors.New("Project " + projectName + " not exists")
 		}
+
 		bkt := bp.Bucket([]byte(dbName))
 		if bkt == nil {
 			return errors.New("Database " + dbName + " not exists")
@@ -131,10 +130,12 @@ func (b *BoltDB) Up(post *Migrate) error {
 		if bp == nil {
 			return errors.New("Project " + post.Project + " not exists")
 		}
+
 		bkt := bp.Bucket([]byte(post.Database))
 		if bkt == nil {
 			return errors.New("Database " + post.Database + " not exists")
 		}
+
 		encoded, err := json.Marshal(post)
 		if err != nil {
 			return err
@@ -156,14 +157,15 @@ func (b *BoltDB) GetLast(projectName, dbName string, skipNoRollback bool, limit 
 		if bp == nil {
 			return errors.New("Project " + projectName + " not exists")
 		}
+
 		bkt := bp.Bucket([]byte(dbName))
 		if bkt == nil {
 			return errors.New("Database " + dbName + " not exists")
 		}
+
 		err := bkt.ForEach(func(k, v []byte) error {
 			mi := Migrate{}
-			err := json.Unmarshal(v, &mi)
-			if err != nil {
+			if err := json.Unmarshal(v, &mi); err != nil {
 				return err
 			}
 
@@ -209,6 +211,7 @@ func (b *BoltDB) Delete(post *Migrate) error {
 		if bp == nil {
 			return errors.New("Project " + post.Project + " not exists")
 		}
+
 		bkt := bp.Bucket([]byte(post.Database))
 		if bkt == nil {
 			return errors.New("Database " + post.Database + " not exists")

@@ -29,6 +29,7 @@ func MakeList(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 	}
 
 	log.Println("List migrations:")
+
 	for _, migrate := range migrations {
 		t := "migration: " + migrate.Version
 		if !migrate.RollFlag {

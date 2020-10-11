@@ -103,6 +103,7 @@ func parseConfig(path string) (*Config, error) {
 
 func getStorage(typeS string) Storage {
 	var s Storage
+
 	switch typeS {
 	case StorageTypeBoltDB:
 		s = &BoltDB{}

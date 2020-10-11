@@ -102,7 +102,8 @@ func (p *PostgreSQL) Up(post *Migrate) error {
 
 // GetLast получить список последних миграций.
 func (p *PostgreSQL) GetLast(projectName, dbName string, skipNoRollback bool, limit *int) ([]Migrate, error) {
-	var result = []Migrate{}
+	result := make([]Migrate, 0)
+
 	query := "SELECT project, database, version, apply_time, rollback FROM migration WHERE project = $1 AND database = $2"
 
 	// флаг пропускать неоткатываемые миграции

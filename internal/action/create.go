@@ -48,6 +48,7 @@ func MakeCreate(cfgPath, name, mode, project, db string) error {
 		if projectName != project {
 			continue
 		}
+
 		for _, migrations := range value.Migrations {
 			ok := false
 
@@ -76,6 +77,7 @@ func MakeCreate(cfgPath, name, mode, project, db string) error {
 				return err
 			}
 		}
+
 		return nil
 	}
 
