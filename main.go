@@ -48,7 +48,7 @@ func getCommandUp() cli.Command {
 			cli.StringFlag{Name: `database, db, d`, Usage: `database name`},
 		},
 		Action: func(c *cli.Context) error {
-			mStorage, err := storage.Init(c.GlobalString("config"))
+			mStorage, err := storage.New(c.GlobalString("config"))
 			if err != nil {
 				return err
 			}
@@ -93,7 +93,7 @@ func getCommandDown() cli.Command {
 			cli.BoolFlag{Name: `no-skip`, Usage: `not skip migration with rollback is false`},
 		},
 		Action: func(c *cli.Context) error {
-			mStorage, err := storage.Init(c.GlobalString("config"))
+			mStorage, err := storage.New(c.GlobalString("config"))
 			if err != nil {
 				return err
 			}
@@ -148,7 +148,7 @@ func getCommandList() cli.Command {
 			cli.BoolFlag{Name: `no-skip`, Usage: `not skip migration with rollback is false`},
 		},
 		Action: func(c *cli.Context) error {
-			mStorage, err := storage.Init(c.GlobalString("config"))
+			mStorage, err := storage.New(c.GlobalString("config"))
 			if err != nil {
 				return err
 			}

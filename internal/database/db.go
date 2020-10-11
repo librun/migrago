@@ -10,23 +10,23 @@ import (
 	"github.com/librun/migrago/internal/config"
 )
 
-// dbTypePostgres const for Database postgres.
 const dbTypePostgres = "postgres"
 
-// DB struct for Database.
+// DB is a database handle representing a pool of zero or more
+// underlying connections.
 type DB struct {
 	typeDB  string
 	connect *sql.DB
 }
 
-// NewDB initializes connection to Database.
+// NewDB initializes connection to database.
 func NewDB(cfg *config.Database) (*DB, error) {
 	db := DB{
 		typeDB: cfg.TypeDB,
 	}
 
 	if !CheckSupportDatabaseType(cfg.TypeDB) {
-		return &db, errors.New("DB type not support")
+		return &db, errors.New("db type not support")
 	}
 
 	connect, err := sql.Open(cfg.TypeDB, cfg.DSN)
@@ -45,7 +45,7 @@ func NewDB(cfg *config.Database) (*DB, error) {
 	return &db, nil
 }
 
-// Exec runs query.
+// Exec executes a query.
 func (db *DB) Exec(query string) error {
 	txn, err := db.connect.Begin()
 	if err != nil {

@@ -22,6 +22,7 @@ const (
 // DefaultMigrationNameFormat contains template for create migration name.
 const DefaultMigrationNameFormat = "%d%02d%02d_%02d%02d%02d_%s_%s.sql"
 
+// MakeCreate creates new migration file.
 func MakeCreate(cfgPath, name, mode, project, db string) error {
 	cfg := config.YAMLConfig{}
 

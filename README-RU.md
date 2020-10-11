@@ -172,7 +172,7 @@ databases:
 Просмотр применённых миграций. Опции `project` и `db` обязательны. 
 
     $ migrago -c config.yaml list -p testproject -d postgres
-    2020/09/26 16:55:56 List migrations:
+    2020/09/26 16:55:56 Migrations list:
     2020/09/26 16:55:56 migration: 20200427_170000_create_table_test
     2020/09/26 16:55:56 migration: 20200925_150000_update_table_test
 

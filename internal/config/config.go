@@ -104,7 +104,7 @@ func NewConfig(path string, projects, databases []string) (Config, error) {
 	return conf, nil
 }
 
-// GetDB get Database object by Name.
+// GetDB gets database object by name.
 func (c *Config) GetDB(name string) (Database, error) {
 	for _, db := range c.Databases {
 		if db.Name == name {
@@ -115,7 +115,7 @@ func (c *Config) GetDB(name string) (Database, error) {
 	return Database{}, fmt.Errorf("database %s not found in Databases", name)
 }
 
-// GetProject get Project object by Name.
+// GetProject gets project object by name.
 func (c *Config) GetProject(name string) (Project, error) {
 	for _, prj := range c.Projects {
 		if prj.Name == name {
@@ -126,7 +126,7 @@ func (c *Config) GetProject(name string) (Project, error) {
 	return Project{}, fmt.Errorf("project %s not found in Projects", name)
 }
 
-// GetDB get Database object by Name.
+// GetDB gets database object by name.
 func (p *Project) GetDB(name string) (Database, error) {
 	for _, migration := range p.Migrations {
 		if migration.Database.Name == name {
@@ -137,7 +137,7 @@ func (p *Project) GetDB(name string) (Database, error) {
 	return Database{}, fmt.Errorf("database %s not found in Project %s Databases", name, p.Name)
 }
 
-// GetProjectMigration get relation Database in Project by Database Name.
+// GetProjectMigration gets relation database in project by database name.
 func (p *Project) GetProjectMigration(dbName string) (ProjectMigration, error) {
 	for _, migration := range p.Migrations {
 		if migration.Database.Name == dbName {
@@ -177,7 +177,7 @@ func (cfg *YAMLConfig) parseProjects(conf Config, projectCurrent map[string]bool
 	projects := make([]Project, 0, len(cfg.Projects))
 
 	for prjName, prjMigration := range cfg.Projects {
-		// Если не нужен данный проект пропустим его.
+		// If this project is not needed, skip it.
 		if _, ok := projectCurrent[prjName]; projectDelete && !ok {
 			continue
 		}
@@ -188,13 +188,13 @@ func (cfg *YAMLConfig) parseProjects(conf Config, projectCurrent map[string]bool
 
 		for _, migration := range prjMigration.Migrations {
 			for dbName, path := range migration {
-				// Если не нужна данная БД пропустим её.
+				// If this database is not needed, skip it.
 				if _, ok := dbCurrent[dbName]; dbDelete && !ok {
 					continue
 				}
 
 				if db, err := conf.GetDB(dbName); err == nil {
-					// Проверим путь до миграций на существование.
+					// Check that the path to migrations exists.
 					if fi, err := os.Stat(path); os.IsNotExist(err) || !fi.IsDir() {
 						return projects, fmt.Errorf("directory %s not exists", path)
 					}

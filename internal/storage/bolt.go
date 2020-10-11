@@ -21,7 +21,7 @@ type BoltDB struct {
 	connect *bolt.DB
 }
 
-// Init инициализация соединения с хранилищем.
+// New инициализация соединения с хранилищем.
 func (b *BoltDB) Init(cfg *Config) error {
 	if cfg.Path == "" {
 		cfg.Path = migrateDataFilePathDefault

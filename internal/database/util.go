@@ -2,7 +2,7 @@ package database
 
 import "database/sql"
 
-// CheckSupportDatabaseType check support Database driver.
+// CheckSupportDatabaseType checks support database driver.
 func CheckSupportDatabaseType(dbType string) bool {
 	support := false
 

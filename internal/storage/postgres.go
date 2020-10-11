@@ -15,7 +15,7 @@ type PostgreSQL struct {
 	connect *sql.DB
 }
 
-// Init инициализация соединения с хранилищем.
+// New инициализация соединения с хранилищем.
 func (p *PostgreSQL) Init(cfg *Config) error {
 	var err error
 	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)

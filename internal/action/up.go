@@ -14,14 +14,14 @@ import (
 )
 
 const (
-	// migratePostfixUp postfix for file up migrate.
+	// migratePostfixUp is a postfix for file up migrate.
 	migratePostfixUp = "_up.sql"
 
-	// migratePostfixDown postfix for file up migrate.
+	// migratePostfixDown is a postfix for file up migrate.
 	migratePostfixDown = "_down.sql"
 )
 
-// MakeUp do migrate up.
+// MakeUp applies migrations.
 func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) error {
 	projects := make([]string, 0)
 	if project != nil {
@@ -44,12 +44,12 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 
 		for _, migration := range project.Migrations {
 			log.Println("DB: " + migration.Database.Name)
-			// создаем бакет по имени проекта
+			// Create a bucket by the name of the project.
 			if err := mStorage.CreateProjectDB(project.Name, migration.Database.Name); err != nil {
 				return err
 			}
 
-			// список всех файлов
+			// All files list.
 			filesInDir, err := ioutil.ReadDir(migration.Path)
 			if err != nil {
 				return err
@@ -59,13 +59,14 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 
 			for _, f := range filesInDir {
 				fileName := f.Name()
-				// получаем список файлов на создание миграций, если имя короче 8 символов пропускаем
+				// Get a list of files to create migrations. Skip if the name is shorter
+				// than 8 characters.
 				if len(fileName) > 7 && fileName[len(fileName)-7:] == migratePostfixUp {
 					keys = append(keys, fileName[:len(fileName)-7])
 				}
 			}
 
-			// сортируем список миграций по дате создания
+			// Sort the list of migrations by creation date.
 			sort.Strings(keys)
 
 			_, err = makeMigrationInDB(mStorage, migration, project.Name, keys)
@@ -118,7 +119,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 
 		query := string(content)
 		if strings.TrimSpace(query) != "" {
-			// выполнение всех запросов из текущего файла
+			// Executing all requests from the current file.
 			if errExec := dbc.Exec(query); errExec != nil {
 				log.Println("migration fail: " + version)
 				return countCompleted, errExec
@@ -133,7 +134,8 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 			RollFlag:  true,
 		}
 
-		// если файла с окончанием down.sql не существует, то указываем, что эта миграция не откатываемая
+		// If the file with the ending down.sql does not exist, then indicate that
+		// this migration is not rolling back.
 		if _, err := os.Stat(migration.Path + version + migratePostfixDown); os.IsNotExist(err) {
 			post.RollFlag = false
 		}

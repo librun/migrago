@@ -7,7 +7,7 @@ import (
 	"github.com/librun/migrago/internal/storage"
 )
 
-// MakeList show success migrations.
+// MakeList shows success applied migrations.
 func MakeList(mStorage storage.Storage, cfgPath, projectName, dbName string, rollbackCount *int, skipNoRollback bool) error {
 	cfg, err := config.NewConfig(cfgPath, []string{projectName}, []string{dbName})
 	if err != nil {
@@ -28,7 +28,7 @@ func MakeList(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 		return err
 	}
 
-	log.Println("List migrations:")
+	log.Println("Migrations list:")
 
 	for _, migrate := range migrations {
 		t := "migration: " + migrate.Version
