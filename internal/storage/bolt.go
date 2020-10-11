@@ -11,17 +11,15 @@ import (
 )
 
 const (
-	// StorageTypeBoltDB константа для типа хранилища boltdb
+	// StorageTypeBoltDB константа для типа хранилища boltdb.
 	StorageTypeBoltDB          = "boltdb"
 	migrateDataFilePathDefault = "data/migrations.db"
 )
 
-type (
-	// BoltDB тип хранилища boltdb
-	BoltDB struct {
-		connect *bolt.DB
-	}
-)
+// BoltDB тип хранилища boltdb.
+type BoltDB struct {
+	connect *bolt.DB
+}
 
 // Init инициализация соединения с хранилищем.
 func (b *BoltDB) Init(cfg *Config) error {
@@ -75,7 +73,7 @@ func (b *BoltDB) CreateProjectDB(projectName, dbName string) error {
 			return createProjectBucketERR
 		}
 
-		// внутри бакета с именем проекта созадаем бакет с именем базы данных
+		// внутри бакета с именем проекта созадаем бакет с именем базы данных.
 		if _, createDBBucketERR := bp.CreateBucketIfNotExists([]byte(dbName)); createDBBucketERR != nil {
 			return createDBBucketERR
 		}

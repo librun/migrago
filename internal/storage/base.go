@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	// Storage интерфейс хранилища
+	// Storage интерфейс хранилища.
 	Storage interface {
 		PreInit(cfg *Config) error
 		Init(cfg *Config) error
@@ -21,7 +21,7 @@ type (
 		Delete(post *Migrate) error
 	}
 
-	// Config конфиг для хранилища
+	// Config конфиг для хранилища.
 	Config struct {
 		StorageType string `yaml:"storage_type"`
 		Path        string `yaml:"path"`
@@ -33,7 +33,7 @@ type (
 		MigrationStorage Config `yaml:"migration_storage"`
 	}
 
-	// Migrate модель миграции
+	// Migrate модель миграции.
 	Migrate struct {
 		Project   string
 		Database  string

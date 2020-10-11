@@ -3,26 +3,27 @@ package action
 import (
 	"log"
 
+	"github.com/librun/migrago/internal/config"
 	"github.com/librun/migrago/internal/storage"
 )
 
 // MakeList show success migrations.
 func MakeList(mStorage storage.Storage, cfgPath, projectName, dbName string, rollbackCount *int, skipNoRollback bool) error {
-	config, err := initConfig(cfgPath, []string{projectName}, []string{dbName})
+	cfg, err := config.NewConfig(cfgPath, []string{projectName}, []string{dbName})
 	if err != nil {
 		return err
 	}
 
-	project, err := config.getProject(projectName)
+	project, err := cfg.GetProject(projectName)
 	if err != nil {
 		return err
 	}
 
-	if _, err := project.getDB(dbName); err != nil {
+	if _, err := project.GetDB(dbName); err != nil {
 		return err
 	}
 
-	migrations, err := mStorage.GetLast(project.name, dbName, skipNoRollback, rollbackCount)
+	migrations, err := mStorage.GetLast(project.Name, dbName, skipNoRollback, rollbackCount)
 	if err != nil {
 		return err
 	}

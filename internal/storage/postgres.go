@@ -1,25 +1,19 @@
 package storage
 
 import (
+	"database/sql"
 	"strconv"
 
-	"database/sql"
-
-	// init postgresql driver
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // init postgresql driver.
 )
 
-const (
-	// StorageTypePostgreSQL константа для типа хранилища postgres
-	StorageTypePostgreSQL = "postgres"
-)
+// StorageTypePostgreSQL константа для типа хранилища postgres.
+const StorageTypePostgreSQL = "postgres"
 
-type (
-	// PostgreSQL тип хранилища postgres
-	PostgreSQL struct {
-		connect *sql.DB
-	}
-)
+// PostgreSQL тип хранилища postgres.
+type PostgreSQL struct {
+	connect *sql.DB
+}
 
 // Init инициализация соединения с хранилищем.
 func (p *PostgreSQL) Init(cfg *Config) error {
@@ -42,8 +36,8 @@ func (p *PostgreSQL) Init(cfg *Config) error {
 // PreInit подготовка БД к работе.
 func (p *PostgreSQL) PreInit(cfg *Config) error {
 	var err error
-	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)
 
+	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)
 	if err != nil {
 		return err
 	}
@@ -54,7 +48,7 @@ func (p *PostgreSQL) PreInit(cfg *Config) error {
 		}
 	}
 
-	// выполним запрос на создание таблицы для миграций
+	// выполним запрос на создание таблицы для миграций.
 	if _, err := p.connect.Exec("CREATE TABLE migration (" +
 		"\"project\" varchar NOT NULL, \"database\" varchar NOT NULL,\"version\" varchar NOT NULL, " +
 		"\"apply_time\" bigint NOT NULL DEFAULT 0, \"rollback\" bool NOT NULL DEFAULT true, " +
