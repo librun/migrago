@@ -135,7 +135,6 @@ issues:
     - "shadow: declaration of \"err\" shadows declaration at line" # govet
     - "a blank import should be only in a main or test package, or have a comment justifying it" # golint
     - "octalLiteral: suspicious octal args in" # gocritic
-    - "\\(\\*Project\\).getDB" # unparam
   exclude-rules:
     - text: "line is 164 characters"
       linters:
