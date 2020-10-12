@@ -170,7 +170,7 @@ Creating a new SQL migration. The options `project`, `db` and `name` are require
     2020/09/27 05:41:40 Migration successfully created
 
 |Option|Required|Description|
-|-----|------|------------|--------|
+|-----|------------|--------|
 |project, p|yes|Project name|
 |db, d|да|Database name|
 |name, n|yes|Name for migration|
