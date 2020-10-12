@@ -1,7 +1,7 @@
 # Migrago
 [![golangci-lint](https://github.com/librun/migrago/workflows/golangci-lint/badge.svg)](https://github.com/librun/migrago/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/librun/migrago)](https://goreportcard.com/report/github.com/librun/migrago)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/ibrun/migrago)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/librun/migrago)
 [![GitHub All Releases](https://img.shields.io/github/downloads/librun/migrago/total)](https://github.com/librun/migrago/releases)
 
 Cli Migrator for SQL-like Databases.
