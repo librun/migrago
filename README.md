@@ -180,7 +180,7 @@ Creating a new SQL migration. The options `project`, `db` and `name` are require
 When specifying a new migration, you need to create files:  
 `%time%_%name%_up.sql` and  
 `%time%_%name%_down.sql` (If you want to create a rollback migration)  
-Time format: `YYYYMMDD_HHIICC`
+Time format: `YYYYMMDD_HHMMCC`
 
 ## Example:
 ### File `20190307_010200_book_up.sql`
