@@ -8,55 +8,68 @@ import (
 	"strings"
 	"time"
 
+	"github.com/librun/migrago/internal/config"
+	"github.com/librun/migrago/internal/database"
 	"github.com/librun/migrago/internal/storage"
 )
 
-// MakeUp do migrate up
-func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string) error {
-	var projects = make([]string, 0)
+const (
+	// migratePostfixUp is a postfix for file up migrate.
+	migratePostfixUp = "_up.sql"
+
+	// migratePostfixDown is a postfix for file up migrate.
+	migratePostfixDown = "_down.sql"
+)
+
+// MakeUp applies migrations.
+func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) error {
+	projects := make([]string, 0)
 	if project != nil {
 		projects = append(projects, *project)
 	}
 
-	var databases = make([]string, 0)
-	if database != nil {
-		databases = append(databases, *database)
+	databases := make([]string, 0)
+	if dbName != nil {
+		databases = append(databases, *dbName)
 	}
 
-	config, err := initConfig(cfgPath, projects, databases)
+	cfg, err := config.NewConfig(cfgPath, projects, databases)
 	if err != nil {
 		return err
 	}
 
-	for _, project := range config.projects {
-		log.Println("Project: " + project.name)
+	for _, project := range cfg.Projects {
+		log.Println("Project: " + project.Name)
 		log.Println("----------")
-		for _, migration := range project.migrations {
-			log.Println("DB: " + migration.database.name)
-			//создаем бакет по имени проекта
-			if err := mStorage.CreateProjectDB(project.name, migration.database.name); err != nil {
+
+		for _, migration := range project.Migrations {
+			log.Println("DB: " + migration.Database.Name)
+			// Create a bucket by the name of the project.
+			if err := mStorage.CreateProjectDB(project.Name, migration.Database.Name); err != nil {
 				return err
 			}
 
-			//список всех файлов
-			filesInDir, err := ioutil.ReadDir(migration.path)
+			// All files list.
+			filesInDir, err := ioutil.ReadDir(migration.Path)
 			if err != nil {
 				return err
 			}
 
 			var keys []string
+
 			for _, f := range filesInDir {
 				fileName := f.Name()
-				//получаем список файлов на создание миграций, если имя короче 8 символов пропускаем
+				// Get a list of files to create migrations. Skip if the name is shorter
+				// than 8 characters.
 				if len(fileName) > 7 && fileName[len(fileName)-7:] == migratePostfixUp {
 					keys = append(keys, fileName[:len(fileName)-7])
 				}
 			}
-			//сортируем список миграций по дате создания
+
+			// Sort the list of migrations by creation date.
 			sort.Strings(keys)
 
-			_, err = makeMigrationInDB(mStorage, &migration, project.name, keys)
-			log.Println("----------")
+			_, err = makeMigrationInDB(mStorage, migration, project.Name, keys)
 			if err != nil {
 				return err
 			}
@@ -66,43 +79,48 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, database *string)
 	return nil
 }
 
-func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, projectName string, keys []string) (int, error) {
+func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigration, projectName string, keys []string) (int, error) {
+	defer log.Println("----------")
+
 	var countCompleted int
 	var countTotal int
-	//откроем соединение с БД
-	dbc, errDB := initDB(migration.database)
+
+	dbc, errDB := database.NewDB(migration.Database)
 	if errDB != nil {
 		return countCompleted, errDB
 	}
-	// закроеи подключение к БД
+
 	defer func() {
 		log.Println("Completed migrations:", countCompleted, "of", countTotal)
-		if err := dbc.close(); err != nil {
+
+		if err := dbc.Close(); err != nil {
 			panic(err)
 		}
 	}()
 
-	// calculate total migrage for run
+	// Calculate total migrations to run.
 	var workKeys []string
+
 	for _, version := range keys {
-		if haveMigrate, err := mStorage.CheckMigration(projectName, migration.database.name, version); !haveMigrate {
+		if haveMigrate, err := mStorage.CheckMigration(projectName, migration.Database.Name, version); !haveMigrate {
 			workKeys = append(workKeys, version)
 		} else if err != nil {
 			return countCompleted, err
 		}
 	}
+
 	countTotal = len(workKeys)
 
 	for _, version := range workKeys {
-		content, err := ioutil.ReadFile(migration.path + version + migratePostfixUp)
+		content, err := ioutil.ReadFile(migration.Path + version + migratePostfixUp)
 		if err != nil {
 			return countCompleted, err
 		}
 
 		query := string(content)
 		if strings.TrimSpace(query) != "" {
-			//выполнение всех запросов из текущего файла
-			if errExec := dbc.exec(query); errExec != nil {
+			// Executing all requests from the current file.
+			if errExec := dbc.Exec(query); errExec != nil {
 				log.Println("migration fail: " + version)
 				return countCompleted, errExec
 			}
@@ -110,14 +128,15 @@ func makeMigrationInDB(mStorage storage.Storage, migration *projectMigration, pr
 
 		post := &storage.Migrate{
 			Project:   projectName,
-			Database:  migration.database.name,
+			Database:  migration.Database.Name,
 			Version:   version,
 			ApplyTime: time.Now().UTC().Unix(),
 			RollFlag:  true,
 		}
 
-		//если файла с окончанием down.sql не существует, то указываем, что эта миграция не откатываемая
-		if _, err := os.Stat(migration.path + version + migratePostfixDown); os.IsNotExist(err) {
+		// If the file with the ending down.sql does not exist, then indicate that
+		// this migration is not rolling back.
+		if _, err := os.Stat(migration.Path + version + migratePostfixDown); os.IsNotExist(err) {
 			post.RollFlag = false
 		}
 
