@@ -172,15 +172,15 @@ Creating a new SQL migration. The options `project`, `db` and `name` are require
 |Option|Required|Description|
 |-----|------------|--------|
 |project, p|yes|Project name|
-|db, d|да|Database name|
+|db, d|yes|Database name|
 |name, n|yes|Name for migration|
 |mode, m|no|Type of migration to create up/down/both (default: up)|
 
 # Migration file requirements
-When specifying a new migration, you need to create files:
+When specifying a new migration, you need to create files:  
 `%time%`_`%name%`_up.sql and  
 `%time%`_`%name%`_down.sql (If you want to create a rollback migration)  
-Time format: `YYYYMMDD_HHIICC` 
+Time format: `YYYYMMDD_HHIICC`
 
 ## Example:
 ### File `20190307_010200_book_up.sql`
