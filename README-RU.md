@@ -7,11 +7,11 @@ Migrago это инструмент для миграций SQL-like баз да
 директорию `$GOPATH/bin`.
 
 #### Linux
-    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.0/migrago-1.1.0-amd64_linux.tar.gz" \
-        | tar -zOx "migrago-1.1.0-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
+    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.1/migrago-1.1.1-amd64_linux.tar.gz" \
+        | tar -zOx "migrago-1.1.1-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
 
 ### Установка из исходников
-    go get https://github.com/librun/migrago@v1.1.0
+    go get https://github.com/librun/migrago@v1.1.1
 
 ## Использование
 ```text
@@ -21,9 +21,9 @@ USAGE:
 COMMANDS:
    up       Upgrade a database to its latest structure
    down     Revert (undo) one or multiple migrations
-   list     show list migrations
+   list     Show list migrations
    init     Initialize storage
-   create   create new migration
+   create   Create new migration
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:

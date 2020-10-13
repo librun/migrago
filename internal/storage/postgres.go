@@ -7,18 +7,17 @@ import (
 	_ "github.com/lib/pq" // init postgresql driver.
 )
 
-// StorageTypePostgreSQL константа для типа хранилища postgres.
-const StorageTypePostgreSQL = "postgres"
-
-// PostgreSQL тип хранилища postgres.
+// PostgreSQL is a database handle representing a pool of zero or more
+// underlying connections.
 type PostgreSQL struct {
 	connect *sql.DB
 }
 
-// New инициализация соединения с хранилищем.
+// Init opens a database specified by its database driver name and a
+// driver-specific data source name.
 func (p *PostgreSQL) Init(cfg *Config) error {
 	var err error
-	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)
+	p.connect, err = sql.Open(TypePostgres, cfg.DSN)
 
 	if err != nil {
 		return err
@@ -33,11 +32,11 @@ func (p *PostgreSQL) Init(cfg *Config) error {
 	return nil
 }
 
-// PreInit подготовка БД к работе.
+// PreInit creates migrago table.
 func (p *PostgreSQL) PreInit(cfg *Config) error {
 	var err error
 
-	p.connect, err = sql.Open(StorageTypePostgreSQL, cfg.DSN)
+	p.connect, err = sql.Open(TypePostgres, cfg.DSN)
 	if err != nil {
 		return err
 	}
@@ -48,7 +47,6 @@ func (p *PostgreSQL) PreInit(cfg *Config) error {
 		}
 	}
 
-	// выполним запрос на создание таблицы для миграций.
 	if _, err := p.connect.Exec("CREATE TABLE migration (" +
 		"\"project\" varchar NOT NULL, \"database\" varchar NOT NULL,\"version\" varchar NOT NULL, " +
 		"\"apply_time\" bigint NOT NULL DEFAULT 0, \"rollback\" bool NOT NULL DEFAULT true, " +
@@ -59,7 +57,9 @@ func (p *PostgreSQL) PreInit(cfg *Config) error {
 	return nil
 }
 
-// Close закрытие соединения с хранилищем.
+// Close closes the database and prevents new queries from starting.
+// Close then waits for all queries that have started processing on the server
+// to finish.
 func (p *PostgreSQL) Close() error {
 	if p.connect != nil {
 		return p.connect.Close()
@@ -68,12 +68,13 @@ func (p *PostgreSQL) Close() error {
 	return nil
 }
 
-// CreateProjectDB для postgres не требуется.
+// CreateProjectDB does nothing. Function is not needed for postgres.
+// Introduced to implement the Storage interface.
 func (*PostgreSQL) CreateProjectDB(string, string) error {
 	return nil
 }
 
-// CheckMigration проверить выполнялась ли миграция.
+// CheckMigration checks the migration was done successfully.
 func (p *PostgreSQL) CheckMigration(projectName, dbName, version string) (bool, error) {
 	row := p.connect.QueryRow(
 		"SELECT count(*) FROM migration WHERE project = $1 AND database = $2 AND version = $3 LIMIT 1",
@@ -88,7 +89,7 @@ func (p *PostgreSQL) CheckMigration(projectName, dbName, version string) (bool, 
 	return count > 0, nil
 }
 
-// Up выполнить миграцию.
+// Up runs migration up.
 func (p *PostgreSQL) Up(post *Migrate) error {
 	if _, err := p.connect.Exec(
 		"INSERT INTO migration (project, database, version, apply_time, rollback) VALUES ($1, $2, $3, $4, $5)",
@@ -100,13 +101,13 @@ func (p *PostgreSQL) Up(post *Migrate) error {
 	return nil
 }
 
-// GetLast получить список последних миграций.
+// GetLast gets a list of recent migrations.
 func (p *PostgreSQL) GetLast(projectName, dbName string, skipNoRollback bool, limit *int) ([]Migrate, error) {
 	result := make([]Migrate, 0)
 
 	query := "SELECT project, database, version, apply_time, rollback FROM migration WHERE project = $1 AND database = $2"
 
-	// флаг пропускать неоткатываемые миграции
+	// Flag for skip non-rolling migrations.
 	if skipNoRollback {
 		query += " AND rollback is true"
 	}
@@ -135,14 +136,14 @@ func (p *PostgreSQL) GetLast(projectName, dbName string, skipNoRollback bool, li
 	return result, rows.Err()
 }
 
-// Delete откатить миграцию.
+// Delete calls migration down.
 func (p *PostgreSQL) Delete(post *Migrate) error {
 	_, err := p.connect.Exec(
 		"DELETE FROM migration WHERE project = $1 AND database = $2 AND version = $3",
 		post.Project, post.Database, post.Version,
 	)
 
-	// TODO: сделать проверку вдруг есть миграции после текущей
+	// TODO: check if there are migrations after the current one.
 
 	return err
 }

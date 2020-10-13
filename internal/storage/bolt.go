@@ -10,18 +10,15 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-const (
-	// StorageTypeBoltDB константа для типа хранилища boltdb.
-	StorageTypeBoltDB          = "boltdb"
-	migrateDataFilePathDefault = "data/migrations.db"
-)
+const migrateDataFilePathDefault = "data/migrations.db"
 
-// BoltDB тип хранилища boltdb.
+// BoltDB represents a collection of buckets persisted to a file on disk.
 type BoltDB struct {
 	connect *bolt.DB
 }
 
-// New инициализация соединения с хранилищем.
+// Init creates and opens a database at the given path.
+// If the file does not exist then it will be created automatically.
 func (b *BoltDB) Init(cfg *Config) error {
 	if cfg.Path == "" {
 		cfg.Path = migrateDataFilePathDefault
@@ -37,7 +34,7 @@ func (b *BoltDB) Init(cfg *Config) error {
 	return nil
 }
 
-// PreInit подготовка файлов и прочего к работе.
+// PreInit creates dir fo database file is not exists.
 func (b *BoltDB) PreInit(cfg *Config) error {
 	if cfg.Path == "" {
 		cfg.Path = migrateDataFilePathDefault
@@ -53,7 +50,8 @@ func (b *BoltDB) PreInit(cfg *Config) error {
 	return nil
 }
 
-// Close закрытие соединения с хранилищем.
+// Close releases all database resources.
+// All transactions must be closed before closing the database.
 func (b *BoltDB) Close() error {
 	if b.connect != nil {
 		return b.connect.Close()
@@ -62,7 +60,8 @@ func (b *BoltDB) Close() error {
 	return nil
 }
 
-// CreateProjectDB создание под новый проект/базу новый бакет.
+// CreateProjectDB creates a new bucket for project and database if it doesn't
+// already exist.
 func (b *BoltDB) CreateProjectDB(projectName, dbName string) error {
 	if b.connect == nil {
 		return errors.New("connect is lost")
@@ -74,7 +73,7 @@ func (b *BoltDB) CreateProjectDB(projectName, dbName string) error {
 			return createProjectBucketERR
 		}
 
-		// внутри бакета с именем проекта созадаем бакет с именем базы данных.
+		// Create a bucket with the database name inside the bucket with the name of the project.
 		if _, createDBBucketERR := bp.CreateBucketIfNotExists([]byte(dbName)); createDBBucketERR != nil {
 			return createDBBucketERR
 		}
@@ -85,7 +84,7 @@ func (b *BoltDB) CreateProjectDB(projectName, dbName string) error {
 	return err
 }
 
-// CheckMigration проверить выполнялась ли миграция.
+// CheckMigration checks the migration was done successfully.
 func (b *BoltDB) CheckMigration(projectName, dbName, version string) (bool, error) {
 	if b.connect == nil {
 		return false, errors.New("connect is lost")
@@ -119,7 +118,7 @@ func (b *BoltDB) CheckMigration(projectName, dbName, version string) (bool, erro
 	return found, err
 }
 
-// Up выполнить миграцию.
+// Up runs migration up.
 func (b *BoltDB) Up(post *Migrate) error {
 	if b.connect == nil {
 		return errors.New("connect is lost")
@@ -145,7 +144,7 @@ func (b *BoltDB) Up(post *Migrate) error {
 	})
 }
 
-// GetLast получить список последних миграций.
+// GetLast gets a list of recent migrations.
 func (b *BoltDB) GetLast(projectName, dbName string, skipNoRollback bool, limit *int) ([]Migrate, error) {
 	if b.connect == nil {
 		return nil, errors.New("connect is lost")
@@ -169,7 +168,7 @@ func (b *BoltDB) GetLast(projectName, dbName string, skipNoRollback bool, limit 
 				return err
 			}
 
-			// добавим только откатываемые миграции или все, если флаг (только откатываемые миграции) == false
+			// Add rollback migrations only (or all if flag `rollback migrations only` == false).
 			if mi.RollFlag || !skipNoRollback {
 				migrates = append(migrates, mi)
 			}
@@ -183,14 +182,13 @@ func (b *BoltDB) GetLast(projectName, dbName string, skipNoRollback bool, limit 
 	result := []Migrate{}
 
 	if err == nil {
-		// отсортируем в правильном порядке
+		// Sort in the correct order.
 		sort.Slice(migrates, func(i, j int) bool {
 			return migrates[i].Version > migrates[j].Version
 		})
 
-		// Проверим что есть требуемое кол-во миграций
+		// Check that there is the required number of migrations.
 		if limit != nil && len(migrates) >= *limit {
-			// возьмём с начала count миграций
 			result = migrates[:*limit]
 		} else {
 			result = migrates
@@ -200,7 +198,7 @@ func (b *BoltDB) GetLast(projectName, dbName string, skipNoRollback bool, limit 
 	return result, err
 }
 
-// Delete откатить миграцию.
+// Delete calls migration down.
 func (b *BoltDB) Delete(post *Migrate) error {
 	if b.connect == nil {
 		return errors.New("connect is lost")
@@ -217,7 +215,7 @@ func (b *BoltDB) Delete(post *Migrate) error {
 			return errors.New("Database " + post.Database + " not exists")
 		}
 
-		// TODO: сделать проверку вдруг есть миграции после текущей
+		// TODO: check if there are migrations after the current one.
 
 		return bkt.Delete([]byte(post.Version))
 	})

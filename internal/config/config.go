@@ -36,15 +36,18 @@ type (
 		Schema string
 	}
 
+	// YAMLConfig takes configuration values from YAML file.
 	YAMLConfig struct {
 		Projects  map[string]YAMLConfigProject  `yaml:"projects"`
 		Databases map[string]YAMLConfigDatabase `yaml:"databases"`
 	}
 
+	// YAMLConfigProject is a block for parse projects in YAML config file.
 	YAMLConfigProject struct {
 		Migrations []map[string]string `yaml:"migrations"`
 	}
 
+	// YAMLConfigDatabase is a block for parse databases in YAML config file.
 	YAMLConfigDatabase struct {
 		Type   string `yaml:"type"`
 		DSN    string `yaml:"dsn"`

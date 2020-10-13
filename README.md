@@ -13,11 +13,11 @@ Download the binary from the prepared [releases](https://github.com/librun/migra
 directory `$GOPATH/bin`.
 
 #### Linux
-    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.0/migrago-1.1.0-amd64_linux.tar.gz" \
-        | tar -zOx "migrago-1.1.0-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
+    wget -qO- "https://github.com/librun/migrago/releases/download/v1.1.1/migrago-1.1.1-amd64_linux.tar.gz" \
+        | tar -zOx "migrago-1.1.1-amd64_linux/migrago" > "$GOPATH"/bin/migrago && chmod +x "$GOPATH"/bin/migrago
 
 ### Installing from source
-    go get https://github.com/librun/migrago@v1.1.0
+    go get https://github.com/librun/migrago@v1.1.1
 
 ## Usage
 ```text

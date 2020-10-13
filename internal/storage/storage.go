@@ -8,6 +8,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Allowed database storage types.
+const (
+	TypeBoltDB   = "boltdb"
+	TypePostgres = "postgres"
+)
+
 type (
 	// Storage describes methods for working with a migration storage.
 	Storage interface {
@@ -106,9 +112,9 @@ func getStorage(typeS string) Storage {
 	var s Storage
 
 	switch typeS {
-	case StorageTypeBoltDB:
+	case TypeBoltDB:
 		s = &BoltDB{}
-	case StorageTypePostgreSQL:
+	case TypePostgres:
 		s = &PostgreSQL{}
 	default: // use BoltDB by default for backward compatibility
 		s = &BoltDB{}

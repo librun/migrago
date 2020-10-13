@@ -118,7 +118,7 @@ func getCommandDown() cli.Command {
 				return errors.New("limit revert migration is not define")
 			}
 
-			// флаг пропускать неоткатываемые миграции
+			// Flag for skip non-rolling migrations.
 			skip := true
 			if c.IsSet("no-skip") {
 				skip = false
@@ -177,7 +177,7 @@ func getCommandList() cli.Command {
 				}
 			}
 
-			// флаг пропускать неоткатываемые миграции
+			// Flag for skip non-rolling migrations.
 			skip := true
 			if c.IsSet("no-skip") {
 				skip = false
