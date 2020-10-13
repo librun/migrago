@@ -13,7 +13,7 @@ import (
 )
 
 // Version displays service version in semantic versioning (http://semver.org/).
-// Can be replaced while compiling with flag `-ldflags "-X main.Version=${VERSION}"`.
+// Can be replaced while compiling with flag "-ldflags "-X main.Version=${VERSION}"".
 var Version = "develop"
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	app.Version = Version
 	app.Usage = "cli-migration"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: `config, c`, Usage: `path to configuration file`, Required: true},
+		cli.StringFlag{Name: "config, c", Usage: "Path to configuration file", Required: true},
 	}
 	app.Commands = []cli.Command{
 		getCommandUp(),
@@ -44,8 +44,8 @@ func getCommandUp() cli.Command {
 		Description: "To upgrade a database to its latest structure, you should apply all available new migrations using this command",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: `project, p`, Usage: `project name`},
-			cli.StringFlag{Name: `database, db, d`, Usage: `database name`},
+			cli.StringFlag{Name: "project, p", Usage: "Project name"},
+			cli.StringFlag{Name: "database, db, d", Usage: "Database name"},
 		},
 		Action: func(c *cli.Context) error {
 			mStorage, err := storage.New(c.GlobalString("config"))
@@ -87,10 +87,10 @@ func getCommandDown() cli.Command {
 		Description: "To revert (undo) one or multiple migrations that have been applied before, you can run this command",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
-			cli.StringFlag{Name: `database, db, d`, Usage: `database name`, Required: true},
-			cli.IntFlag{Name: `limit, l`, Usage: `limit revert migrations`, Required: true, Value: 1},
-			cli.BoolFlag{Name: `no-skip`, Usage: `not skip migration with rollback is false`},
+			cli.StringFlag{Name: "project, p", Usage: "Project name", Required: true},
+			cli.StringFlag{Name: "database, db, d", Usage: "Database name", Required: true},
+			cli.IntFlag{Name: "limit, l", Usage: "Limit revert migrations", Required: true, Value: 1},
+			cli.BoolFlag{Name: "no-skip", Usage: "Not skip migration with rollback is false"},
 		},
 		Action: func(c *cli.Context) error {
 			mStorage, err := storage.New(c.GlobalString("config"))
@@ -138,14 +138,14 @@ func getCommandDown() cli.Command {
 func getCommandList() cli.Command {
 	return cli.Command{
 		Name:        "list",
-		Usage:       "Show list migrations",
-		Description: "Show list migrations that have been applied before, you can run this command",
+		Usage:       "Show migrations list",
+		Description: "Show migrations that have been applied",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
-			cli.StringFlag{Name: `database, db, d`, Usage: `database name`, Required: true},
-			cli.IntFlag{Name: `limit, l`, Usage: `limit revert migrations`},
-			cli.BoolFlag{Name: `no-skip`, Usage: `not skip migration with rollback is false`},
+			cli.StringFlag{Name: "project, p", Usage: "Project name", Required: true},
+			cli.StringFlag{Name: "database, db, d", Usage: "Database name", Required: true},
+			cli.IntFlag{Name: "limit, l", Usage: "Limit revert migrations"},
+			cli.BoolFlag{Name: "no-skip", Usage: "Not skip migration with rollback is false"},
 		},
 		Action: func(c *cli.Context) error {
 			mStorage, err := storage.New(c.GlobalString("config"))
@@ -217,10 +217,10 @@ func getCommandCreate() cli.Command {
 		Description: "Create new empty migration file in project directory",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: `project, p`, Usage: `project name`, Required: true},
-			cli.StringFlag{Name: `db, d`, Usage: `target db if multiple (default: postgres)`, Required: false},
-			cli.StringFlag{Name: `name, n`, Usage: `file name (default: new_migration)`, Required: false},
-			cli.StringFlag{Name: `mode, m`, Usage: `up | down | both (default: up)`, Required: false},
+			cli.StringFlag{Name: "project, p", Usage: "Project name", Required: true},
+			cli.StringFlag{Name: "database, db, d", Usage: "Database name", Required: false},
+			cli.StringFlag{Name: "name, n", Usage: "File name", Required: false},
+			cli.StringFlag{Name: "mode, m", Usage: "Migration file type [up|down|both] (default: up)", Required: false},
 		},
 		Action: func(c *cli.Context) error {
 			project := c.String("project")

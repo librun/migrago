@@ -27,9 +27,9 @@ USAGE:
 COMMANDS:
    up       Upgrade a database to its latest structure
    down     Revert (undo) one or multiple migrations
-   list     show list migrations
+   list     Show list migrations
    init     Initialize storage
-   create   create new migration
+   create   Create new migration
    help, h  Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
