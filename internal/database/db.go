@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 
-	_ "github.com/ClickHouse/clickhouse-go"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	_ "github.com/ClickHouse/clickhouse-go" // add ClickHouse driver
+	_ "github.com/go-sql-driver/mysql"      // add MySQL driver
+	_ "github.com/lib/pq"                   // add postgres driver
 	"github.com/librun/migrago/internal/config"
 )
 

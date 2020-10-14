@@ -51,7 +51,7 @@ func MakeCreate(cfgPath, name, mode, project, db string) error {
 		}
 
 		for _, migrations := range value.Migrations {
-			ok := false
+			var ok bool
 
 			if directory, ok = migrations[db]; !ok {
 				continue
