@@ -25,7 +25,7 @@ function make_release() {
     local dir="release/${release_name}"
 
     mkdir -p "${dir}"
-    env GOARCH="${arch}" GOOS="${os}" go build -ldflags "-s -w -X main.Version=${VERSION}" -o "${dir}/${NAME}${ext}"
+    env GOARCH="${arch}" GOOS="${os}" CGO_ENABLED=0 go build -ldflags "-s -w -X main.Version=${VERSION}" -o "${dir}/${NAME}${ext}"
 
     cp LICENSE "${dir}"
     cp README.md "${dir}"
