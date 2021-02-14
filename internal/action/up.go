@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -35,7 +36,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 
 	cfg, err := config.NewConfig(cfgPath, projects, databases)
 	if err != nil {
-		return err
+		return fmt.Errorf("get config: %w", err)
 	}
 
 	for _, project := range cfg.Projects {
@@ -46,13 +47,13 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 			log.Println("DB: " + migration.Database.Name)
 			// Create a bucket by the name of the project.
 			if err := mStorage.CreateProjectDB(project.Name, migration.Database.Name); err != nil {
-				return err
+				return fmt.Errorf("create project db: %w", err)
 			}
 
 			// All files list.
 			filesInDir, err := ioutil.ReadDir(migration.Path)
 			if err != nil {
-				return err
+				return fmt.Errorf("get files list: %w", err)
 			}
 
 			var keys []string
@@ -69,8 +70,7 @@ func MakeUp(mStorage storage.Storage, cfgPath string, project, dbName *string) e
 			// Sort the list of migrations by creation date.
 			sort.Strings(keys)
 
-			_, err = makeMigrationInDB(mStorage, migration, project.Name, keys)
-			if err != nil {
+			if _, err := makeMigrationInDB(mStorage, migration, project.Name, keys); err != nil {
 				return err
 			}
 		}
@@ -105,7 +105,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 		if haveMigrate, err := mStorage.CheckMigration(projectName, migration.Database.Name, version); !haveMigrate {
 			workKeys = append(workKeys, version)
 		} else if err != nil {
-			return countCompleted, err
+			return countCompleted, fmt.Errorf("check migration: %w", err)
 		}
 	}
 
@@ -142,7 +142,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 
 		if err := mStorage.Up(post); err != nil {
 			log.Println("migration fail: " + version)
-			return countCompleted, err
+			return countCompleted, fmt.Errorf("storage up: %w", err)
 		}
 
 		log.Println("migration success: " + version)

@@ -59,18 +59,18 @@ type (
 func NewConfig(path string, projects, databases []string) (Config, error) {
 	configFile, err := os.Open(path)
 	if err != nil {
-		return Config{}, fmt.Errorf("config open error: %s", err)
+		return Config{}, fmt.Errorf("config open: %w", err)
 	}
 	defer configFile.Close()
 
 	configByte, err := ioutil.ReadAll(configFile)
 	if err != nil {
-		return Config{}, fmt.Errorf("config read error: %s", err)
+		return Config{}, fmt.Errorf("config read: %w", err)
 	}
 
 	cfg := YAMLConfig{}
 	if err := yaml.Unmarshal(configByte, &cfg); err != nil {
-		return Config{}, fmt.Errorf("config format error: %s", err)
+		return Config{}, fmt.Errorf("config format: %w", err)
 	}
 
 	projectDelete := false
@@ -155,12 +155,12 @@ func (cfg *YAMLConfig) parseDatabases(dbCurrent map[string]bool, dbDelete bool) 
 	databases := make([]Database, 0, len(cfg.Databases))
 
 	for dbName, db := range cfg.Databases {
-		// Если не нужна данная БД пропустим её.
+		// If this database is not needed, skip it.
 		if _, ok := dbCurrent[dbName]; dbDelete && !ok {
 			continue
 		}
 
-		// Проверим тип БД.
+		// Check database type.
 		// if !database.CheckSupportDatabaseType(db.Type) {
 		//	 return Config{}, fmt.Errorf("type Database %s not support", db.Type)
 		// }
@@ -204,7 +204,7 @@ func (cfg *YAMLConfig) parseProjects(conf Config, projectCurrent map[string]bool
 
 					path, err = filepath.Abs(path)
 					if err != nil {
-						return projects, err
+						return projects, fmt.Errorf("get directory %s absolute path: %w", path, err)
 					}
 
 					project.Migrations = append(project.Migrations, ProjectMigration{

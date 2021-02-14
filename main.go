@@ -8,7 +8,6 @@ import (
 
 	"github.com/librun/migrago/internal/action"
 	"github.com/librun/migrago/internal/storage"
-
 	"github.com/urfave/cli"
 )
 
@@ -125,7 +124,7 @@ func getCommandDown() cli.Command {
 			}
 
 			if err := action.MakeDown(mStorage, c.GlobalString("config"), project, db, rollbackCount, skip); err != nil {
-				return err
+				return fmt.Errorf("down: %w", err)
 			}
 
 			log.Println("Rollback is successfully")

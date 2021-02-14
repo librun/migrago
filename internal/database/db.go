@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	_ "github.com/ClickHouse/clickhouse-go" // add ClickHouse driver
 	_ "github.com/go-sql-driver/mysql"      // add MySQL driver
@@ -11,6 +12,11 @@ import (
 )
 
 const dbTypePostgres = "postgres"
+
+// Errors.
+var (
+	ErrUnsupportedDB = errors.New("db type not support")
+)
 
 // DB is a database handle representing a pool of zero or more
 // underlying connections.
@@ -26,17 +32,17 @@ func NewDB(cfg *config.Database) (*DB, error) {
 	}
 
 	if !CheckSupportDatabaseType(cfg.TypeDB) {
-		return &db, errors.New("db type not support")
+		return &db, ErrUnsupportedDB
 	}
 
 	connect, err := sql.Open(cfg.TypeDB, cfg.DSN)
 	if err != nil {
-		return &db, err
+		return &db, fmt.Errorf("connect: %w", err)
 	}
 
 	if cfg.TypeDB == dbTypePostgres && cfg.Schema != "" {
 		if _, err := connect.Exec("SET search_path TO " + cfg.Schema); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("exec: %w", err)
 		}
 	}
 
@@ -49,15 +55,15 @@ func NewDB(cfg *config.Database) (*DB, error) {
 func (db *DB) Exec(query string) error {
 	txn, err := db.connect.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("begin: %w", err)
 	}
 
 	if _, err := txn.Exec(query); err != nil {
 		if err := txn.Rollback(); err != nil {
-			return err
+			return fmt.Errorf("rollback: %w", err)
 		}
 
-		return err
+		return fmt.Errorf("exec: %w", err)
 	}
 
 	return txn.Commit()
@@ -65,9 +71,5 @@ func (db *DB) Exec(query string) error {
 
 // Close closes connection.
 func (db *DB) Close() error {
-	if err := db.connect.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return db.connect.Close()
 }

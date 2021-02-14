@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -28,7 +29,7 @@ func (b *BoltDB) Init(cfg *Config) error {
 
 	b.connect, err = bolt.Open(cfg.Path, 0600, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("bolt: open: %w", err)
 	}
 
 	return nil
@@ -43,7 +44,7 @@ func (b *BoltDB) PreInit(cfg *Config) error {
 	dir := filepath.Dir(cfg.Path)
 	if _, err := os.Stat(dir); err != nil && os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, 0777); err != nil {
-			return err
+			return fmt.Errorf("bolt: preinit: %w", err)
 		}
 	}
 
@@ -68,20 +69,23 @@ func (b *BoltDB) CreateProjectDB(projectName, dbName string) error {
 	}
 
 	err := b.connect.Update(func(tx *bolt.Tx) error {
-		bp, createProjectBucketERR := tx.CreateBucketIfNotExists([]byte(projectName))
-		if createProjectBucketERR != nil {
-			return createProjectBucketERR
+		bp, err := tx.CreateBucketIfNotExists([]byte(projectName))
+		if err != nil {
+			return fmt.Errorf("create project bucket: %w", err)
 		}
 
 		// Create a bucket with the database name inside the bucket with the name of the project.
-		if _, createDBBucketERR := bp.CreateBucketIfNotExists([]byte(dbName)); createDBBucketERR != nil {
-			return createDBBucketERR
+		if _, err := bp.CreateBucketIfNotExists([]byte(dbName)); err != nil {
+			return fmt.Errorf("create database bucket: %w", err)
 		}
 
 		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("update: %w", err)
+	}
 
-	return err
+	return nil
 }
 
 // CheckMigration checks the migration was done successfully.
@@ -114,8 +118,11 @@ func (b *BoltDB) CheckMigration(projectName, dbName, version string) (bool, erro
 
 		return nil
 	})
+	if err != nil {
+		return found, fmt.Errorf("view: %w", err)
+	}
 
-	return found, err
+	return found, nil
 }
 
 // Up runs migration up.

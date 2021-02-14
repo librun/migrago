@@ -59,7 +59,7 @@ func New(pathConfigFile string) (Storage, error) {
 	s := getStorage(cfg.StorageType)
 
 	if err := s.Init(cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new storage init: %w", err)
 	}
 
 	return s, nil
@@ -69,40 +69,39 @@ func New(pathConfigFile string) (Storage, error) {
 func PreInit(pathConfigFile string) error {
 	cfg, err := parseConfig(pathConfigFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("storage parse: %w", err)
 	}
 
 	s := getStorage(cfg.StorageType)
-
 	if err := s.PreInit(cfg); err != nil {
-		return err
+		return fmt.Errorf("storage init: %w", err)
 	}
 
 	if err := s.Close(); err != nil {
-		return err
+		return fmt.Errorf("storage close: %w", err)
 	}
 
 	return nil
 }
 
 // parseConfig gets and returns the part of the config associated
-// with the migrator storage.
+// with Migrago storage.
 func parseConfig(path string) (*Config, error) {
 	configFile, err := os.Open(path)
 	if err != nil {
-		return nil, fmt.Errorf("config open error: %s", err)
+		return nil, fmt.Errorf("config open: %w", err)
 	}
 	defer configFile.Close()
 
 	configByte, err := ioutil.ReadAll(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("config read error: %s", err)
+		return nil, fmt.Errorf("config read: %w", err)
 	}
 
 	cfg := configFull{}
 
 	if err := yaml.Unmarshal(configByte, &cfg); err != nil {
-		return nil, fmt.Errorf("config format error: %s", err)
+		return nil, fmt.Errorf("config format: %w", err)
 	}
 
 	return &cfg.MigrationStorage, nil

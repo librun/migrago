@@ -2,6 +2,7 @@ package action
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -16,32 +17,32 @@ import (
 func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rollbackCount int, skipNoRollback bool) error {
 	cfg, err := config.NewConfig(cfgPath, []string{projectName}, []string{dbName})
 	if err != nil {
-		return err
+		return fmt.Errorf("get config: %w", err)
 	}
 
 	project, err := cfg.GetProject(projectName)
 	if err != nil {
-		return err
+		return fmt.Errorf("get project: %w", err)
 	}
 
 	if _, err := project.GetDB(dbName); err != nil {
-		return err
+		return fmt.Errorf("get project db: %w", err)
 	}
 
 	projectMigration, err := project.GetProjectMigration(dbName)
 	if err != nil {
-		return err
+		return fmt.Errorf("get current migration: %w", err)
 	}
 
-	dbc, errDB := database.NewDB(projectMigration.Database)
-	if errDB != nil {
-		return errDB
+	dbc, err := database.NewDB(projectMigration.Database)
+	if err != nil {
+		return fmt.Errorf("conntect to db: %w", err)
 	}
 	defer dbc.Close()
 
 	migrations, err := mStorage.GetLast(project.Name, dbName, skipNoRollback, &rollbackCount)
 	if err != nil {
-		return err
+		return fmt.Errorf("get last migration: %w", err)
 	}
 
 	if len(migrations) < rollbackCount {
@@ -54,7 +55,7 @@ func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 
 			content, err := ioutil.ReadFile(downFile)
 			if err != nil {
-				return err
+				return fmt.Errorf("read file: %w", err)
 			}
 
 			query := string(content)
@@ -68,7 +69,7 @@ func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 
 		migrate := migrate
 		if err := mStorage.Delete(&migrate); err != nil {
-			return err
+			return fmt.Errorf("delete: %w", err)
 		}
 
 		if migrate.RollFlag {
