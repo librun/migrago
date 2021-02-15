@@ -1,15 +1,7 @@
 run:
   skip-dirs:
-    - test/testdata_etc
-    - pkg/golinters/goanalysis/(checker|passes)
-    - data/
-    - .vscode/
-    - .directory/
-    - debug/
     - vendor/
-  skip-files: 
-    - Gopkg.lock
-    - .gitignore
+  skip-files:
     - ".*_test.go$"
 
 output:
@@ -137,6 +129,7 @@ issues:
     - "are|is missing in" # exhaustivestruct # v1.33
     - "error returned from external package is unwrapped" # wrapcheck # v1.33 # TODO: Finish him!
   exclude-rules:
-    - text: "line is 164 characters"
-      linters:
+    # Allow long function names.
+    - linters:
         - lll
+      source: "^func "
