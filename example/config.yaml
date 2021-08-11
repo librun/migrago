@@ -1,6 +1,6 @@
 migration_storage:
-  storage_type: "boltdb" # boltdb|postgres
-  dsn: "postgres://postgres:postgres@localhost:5432/migrago?sslmode=disable"
+  storage_type: "postgres" # boltdb|postgres
+  dsn: "postgres://postgres:postgres@dbpg:5432/migrago?sslmode=disable"
   schema: "public"
   path: "example/data/migrations.db"
 
@@ -12,7 +12,7 @@ projects:
 databases:
   example_database_postgresql:
     type: postgres
-    dsn: "postgres://postgres:postgres@localhost/postgres?sslmode=disable"
+    dsn: "postgres://postgres:postgres@localhost2/postgres?sslmode=disable"
     schema: "test"
   example_database_clickhouse:
     type: clickhouse
