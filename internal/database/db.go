@@ -25,6 +25,10 @@ type DB struct {
 	connect *sql.DB
 }
 
+type Tx struct {
+	tx *sql.Tx
+}
+
 // NewDB initializes connection to database.
 func NewDB(cfg *config.Database) (*DB, error) {
 	db := DB{
@@ -51,25 +55,49 @@ func NewDB(cfg *config.Database) (*DB, error) {
 	return &db, nil
 }
 
-// Exec executes a query.
-func (db *DB) Exec(query string) error {
+// Begin transaction for migration.
+func (db *DB) Begin() (*Tx, error) {
 	txn, err := db.connect.Begin()
 	if err != nil {
-		return fmt.Errorf("begin: %w", err)
+		return nil, fmt.Errorf("database begin: %w", err)
 	}
 
-	if _, err := txn.Exec(query); err != nil {
-		if err := txn.Rollback(); err != nil {
+	return &Tx{tx: txn}, nil
+}
+
+// Close closes connection.
+func (db *DB) Close() error {
+	return db.connect.Close()
+}
+
+
+// Exec executes a query.
+func (t *Tx) Exec(query string) error {
+	if _, err := t.tx.Exec(query); err != nil {
+		if err := t.tx.Rollback(); err != nil {
 			return fmt.Errorf("rollback: %w", err)
 		}
 
 		return fmt.Errorf("exec: %w", err)
 	}
 
-	return txn.Commit()
+	return nil
 }
 
-// Close closes connection.
-func (db *DB) Close() error {
-	return db.connect.Close()
+// Commit transaction for migration.
+func (t *Tx) Commit() error {
+	if err := t.tx.Commit(); err != nil {
+		return fmt.Errorf("database commit: %w", err)
+	}
+
+	return nil
+}
+
+// Rollback transaction for migration.
+func (t *Tx) Rollback() error {
+	if err := t.tx.Rollback(); err != nil {
+		return fmt.Errorf("database rollback: %w", err)
+	}
+
+	return nil
 }

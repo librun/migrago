@@ -112,16 +112,24 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 	countTotal = len(workKeys)
 
 	for _, version := range workKeys {
-		content, err := ioutil.ReadFile(migration.Path + version + migratePostfixUp)
-		if err != nil {
-			return countCompleted, err
+		content, errReadFile := ioutil.ReadFile(migration.Path + version + migratePostfixUp)
+		if errReadFile != nil {
+			return countCompleted, errReadFile
+		}
+
+		dbTx, errBegin := dbc.Begin()
+		if errBegin != nil {
+			log.Println("migration fail: " + version)
+
+			return countCompleted, errBegin
 		}
 
 		query := string(content)
 		if strings.TrimSpace(query) != "" {
 			// Executing all requests from the current file.
-			if errExec := dbc.Exec(query); errExec != nil {
+			if errExec := dbTx.Exec(query); errExec != nil {
 				log.Println("migration fail: " + version)
+
 				return countCompleted, errExec
 			}
 		}
@@ -142,7 +150,18 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 
 		if err := mStorage.Up(post); err != nil {
 			log.Println("migration fail: " + version)
+
+			if errRollback := dbTx.Rollback(); errRollback != nil {
+				return countCompleted, errRollback
+			}
+
 			return countCompleted, fmt.Errorf("storage up: %w", err)
+		}
+
+		if errCommit := dbTx.Commit(); errCommit != nil {
+			log.Println("migration fail: " + version)
+
+			return countCompleted, errCommit
 		}
 
 		log.Println("migration success: " + version)

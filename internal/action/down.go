@@ -50,18 +50,29 @@ func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 	}
 
 	for _, migrate := range migrations {
+		dbTx, errBegin := dbc.Begin()
+		if errBegin != nil {
+			log.Println("migration fail: " + migrate.Version)
+
+			return errBegin
+		}
+
 		if migrate.RollFlag {
 			downFile := projectMigration.Path + migrate.Version + migratePostfixDown
 
 			content, err := ioutil.ReadFile(downFile)
 			if err != nil {
+				log.Println("migration fail: " + migrate.Version)
+
 				return fmt.Errorf("read file: %w", err)
 			}
 
 			query := string(content)
 			if strings.TrimSpace(query) != "" {
 				// Executing all requests from the current file.
-				if errExec := dbc.Exec(query); errExec != nil {
+				if errExec := dbTx.Exec(query); errExec != nil {
+					log.Println("migration fail: " + migrate.Version)
+
 					return errExec
 				}
 			}
@@ -69,7 +80,19 @@ func MakeDown(mStorage storage.Storage, cfgPath, projectName, dbName string, rol
 
 		migrate := migrate
 		if err := mStorage.Delete(&migrate); err != nil {
-			return fmt.Errorf("delete: %w", err)
+			log.Println("migration fail: " + migrate.Version)
+
+			if errRollback := dbTx.Rollback(); errRollback != nil {
+				return errRollback
+			}
+
+			return fmt.Errorf("storage delete: %w", err)
+		}
+
+		if errCommit := dbTx.Commit(); errCommit != nil {
+			log.Println("migration fail: " + migrate.Version)
+
+			return errCommit
 		}
 
 		if migrate.RollFlag {
