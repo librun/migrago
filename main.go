@@ -8,7 +8,7 @@ import (
 
 	"github.com/librun/migrago/internal/action"
 	"github.com/librun/migrago/internal/storage"
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 // Version displays service version in semantic versioning (http://semver.org/).
@@ -21,9 +21,9 @@ func main() {
 	app.Version = Version
 	app.Usage = "cli-migration"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: "config, c", Usage: "Path to configuration file", Required: true},
+		&cli.StringFlag{Name: "config", Aliases: []string{"c"}, Usage: "Path to configuration file", Required: true},
 	}
-	app.Commands = []cli.Command{
+	app.Commands = []*cli.Command{
 		getCommandUp(),
 		getCommandDown(),
 		getCommandList(),
@@ -36,18 +36,18 @@ func main() {
 	}
 }
 
-func getCommandUp() cli.Command {
-	return cli.Command{
+func getCommandUp() *cli.Command {
+	return &cli.Command{
 		Name:        "up",
 		Usage:       "Upgrade a database to its latest structure",
 		Description: "To upgrade a database to its latest structure, you should apply all available new migrations using this command",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "project, p", Usage: "Project name"},
-			cli.StringFlag{Name: "database, db, d", Usage: "Database name"},
+			&cli.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "Project name"},
+			&cli.StringFlag{Name: "database", Aliases: []string{"db", "d"}, Usage: "Database name"},
 		},
 		Action: func(c *cli.Context) error {
-			mStorage, err := storage.New(c.GlobalString("config"))
+			mStorage, err := storage.New(c.String("config"))
 			if err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func getCommandUp() cli.Command {
 				database = &d
 			}
 
-			if err := action.MakeUp(mStorage, c.GlobalString("config"), project, database); err != nil {
+			if err := action.MakeUp(mStorage, c.String("config"), project, database); err != nil {
 				return err
 			}
 
@@ -79,20 +79,20 @@ func getCommandUp() cli.Command {
 	}
 }
 
-func getCommandDown() cli.Command {
-	return cli.Command{
+func getCommandDown() *cli.Command {
+	return &cli.Command{
 		Name:        "down",
 		Usage:       "Revert (undo) one or multiple migrations",
 		Description: "To revert (undo) one or multiple migrations that have been applied before, you can run this command",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "project, p", Usage: "Project name", Required: true},
-			cli.StringFlag{Name: "database, db, d", Usage: "Database name", Required: true},
-			cli.IntFlag{Name: "limit, l", Usage: "Limit revert migrations", Required: true, Value: 1},
-			cli.BoolFlag{Name: "no-skip", Usage: "Not skip migration with rollback is false"},
+			&cli.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "Project name", Required: true},
+			&cli.StringFlag{Name: "database", Aliases: []string{"db", "d"}, Usage: "Database name", Required: true},
+			&cli.IntFlag{Name: "limit", Aliases: []string{"l"}, Usage: "Limit revert migrations", Required: true, Value: 1},
+			&cli.BoolFlag{Name: "no-skip", Usage: "Not skip migration with rollback is false"},
 		},
 		Action: func(c *cli.Context) error {
-			mStorage, err := storage.New(c.GlobalString("config"))
+			mStorage, err := storage.New(c.String("config"))
 			if err != nil {
 				return err
 			}
@@ -123,7 +123,7 @@ func getCommandDown() cli.Command {
 				skip = false
 			}
 
-			if err := action.MakeDown(mStorage, c.GlobalString("config"), project, db, rollbackCount, skip); err != nil {
+			if err := action.MakeDown(mStorage, c.String("config"), project, db, rollbackCount, skip); err != nil {
 				return fmt.Errorf("down: %w", err)
 			}
 
@@ -134,20 +134,20 @@ func getCommandDown() cli.Command {
 	}
 }
 
-func getCommandList() cli.Command {
-	return cli.Command{
+func getCommandList() *cli.Command {
+	return &cli.Command{
 		Name:        "list",
 		Usage:       "Show migrations list",
 		Description: "Show migrations that have been applied",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "project, p", Usage: "Project name", Required: true},
-			cli.StringFlag{Name: "database, db, d", Usage: "Database name", Required: true},
-			cli.IntFlag{Name: "limit, l", Usage: "Limit revert migrations"},
-			cli.BoolFlag{Name: "no-skip", Usage: "Not skip migration with rollback is false"},
+			&cli.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "Project name", Required: true},
+			&cli.StringFlag{Name: "database", Aliases: []string{"db", "d"}, Usage: "Database name", Required: true},
+			&cli.IntFlag{Name: "limit", Aliases: []string{"l"}, Usage: "Limit revert migrations"},
+			&cli.BoolFlag{Name: "no-skip", Usage: "Not skip migration with rollback is false"},
 		},
 		Action: func(c *cli.Context) error {
-			mStorage, err := storage.New(c.GlobalString("config"))
+			mStorage, err := storage.New(c.String("config"))
 			if err != nil {
 				return err
 			}
@@ -182,7 +182,7 @@ func getCommandList() cli.Command {
 				skip = false
 			}
 
-			if err := action.MakeList(mStorage, c.GlobalString("config"), project, db, rollbackCount, skip); err != nil {
+			if err := action.MakeList(mStorage, c.String("config"), project, db, rollbackCount, skip); err != nil {
 				log.Fatalln(err)
 			}
 
@@ -191,14 +191,14 @@ func getCommandList() cli.Command {
 	}
 }
 
-func getCommandInit() cli.Command {
-	return cli.Command{
+func getCommandInit() *cli.Command {
+	return &cli.Command{
 		Name:        "init",
 		Usage:       "Initialize storage",
 		Description: "Initialize storage (for example boltdb - create dir, sql - create table with migrations)",
 		ArgsUsage:   "",
 		Action: func(c *cli.Context) error {
-			if err := storage.PreInit(c.GlobalString("config")); err != nil {
+			if err := storage.PreInit(c.String("config")); err != nil {
 				return err
 			}
 
@@ -209,17 +209,17 @@ func getCommandInit() cli.Command {
 	}
 }
 
-func getCommandCreate() cli.Command {
-	return cli.Command{
+func getCommandCreate() *cli.Command {
+	return &cli.Command{
 		Name:        "create",
 		Usage:       "Create new migration",
 		Description: "Create new empty migration file in project directory",
 		ArgsUsage:   "",
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "project, p", Usage: "Project name", Required: true},
-			cli.StringFlag{Name: "database, db, d", Usage: "Database name", Required: false},
-			cli.StringFlag{Name: "name, n", Usage: "File name", Required: false},
-			cli.StringFlag{Name: "mode, m", Usage: "Migration file type [up|down|both] (default: up)", Required: false},
+			&cli.StringFlag{Name: "project", Aliases: []string{"p"}, Usage: "Project name", Required: true},
+			&cli.StringFlag{Name: "database", Aliases: []string{"db", "d"}, Usage: "Database name", Required: true},
+			&cli.StringFlag{Name: "name", Aliases: []string{"n"}, Usage: "File name", Required: false},
+			&cli.StringFlag{Name: "mode", Aliases: []string{"m"}, Usage: "Migration file type [up|down|both] (default: up)", Required: false},
 		},
 		Action: func(c *cli.Context) error {
 			project := c.String("project")
@@ -246,7 +246,7 @@ func getCommandCreate() cli.Command {
 				return fmt.Errorf("invalid mode: %s", mode)
 			}
 
-			if err := action.MakeCreate(c.GlobalString("config"), name, mode, project, db); err != nil {
+			if err := action.MakeCreate(c.String("config"), name, mode, project, db); err != nil {
 				log.Fatalln(err)
 			}
 
