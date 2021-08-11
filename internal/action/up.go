@@ -112,56 +112,10 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 	countTotal = len(workKeys)
 
 	for _, version := range workKeys {
-		content, errReadFile := ioutil.ReadFile(migration.Path + version + migratePostfixUp)
-		if errReadFile != nil {
-			return countCompleted, errReadFile
-		}
-
-		dbTx, errBegin := dbc.Begin()
-		if errBegin != nil {
+		if err := makeUpOnce(dbc, mStorage, migration, projectName, version); err != nil {
 			log.Println("migration fail: " + version)
 
-			return countCompleted, errBegin
-		}
-
-		query := string(content)
-		if strings.TrimSpace(query) != "" {
-			// Executing all requests from the current file.
-			if errExec := dbTx.Exec(query); errExec != nil {
-				log.Println("migration fail: " + version)
-
-				return countCompleted, errExec
-			}
-		}
-
-		post := &storage.Migrate{
-			Project:   projectName,
-			Database:  migration.Database.Name,
-			Version:   version,
-			ApplyTime: time.Now().UTC().Unix(),
-			RollFlag:  true,
-		}
-
-		// If the file with the ending down.sql does not exist, then indicate that
-		// this migration is not rolling back.
-		if _, err := os.Stat(migration.Path + version + migratePostfixDown); os.IsNotExist(err) {
-			post.RollFlag = false
-		}
-
-		if err := mStorage.Up(post); err != nil {
-			log.Println("migration fail: " + version)
-
-			if errRollback := dbTx.Rollback(); errRollback != nil {
-				return countCompleted, errRollback
-			}
-
-			return countCompleted, fmt.Errorf("storage up: %w", err)
-		}
-
-		if errCommit := dbTx.Commit(); errCommit != nil {
-			log.Println("migration fail: " + version)
-
-			return countCompleted, errCommit
+			return countCompleted, err
 		}
 
 		log.Println("migration success: " + version)
@@ -169,4 +123,48 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 	}
 
 	return countCompleted, nil
+}
+
+func makeUpOnce(dbc *database.DB, mStorage storage.Storage, migration config.ProjectMigration, projectName, version string) error {
+	content, errReadFile := ioutil.ReadFile(migration.Path + version + migratePostfixUp)
+	if errReadFile != nil {
+		return errReadFile
+	}
+
+	dbTx, errBegin := dbc.Begin()
+	if errBegin != nil {
+		return errBegin
+	}
+
+	query := string(content)
+	if strings.TrimSpace(query) != "" {
+		// Executing all requests from the current file.
+		if errExec := dbTx.Exec(query); errExec != nil {
+			return errExec
+		}
+	}
+
+	post := &storage.Migrate{
+		Project:   projectName,
+		Database:  migration.Database.Name,
+		Version:   version,
+		ApplyTime: time.Now().UTC().Unix(),
+		RollFlag:  true,
+	}
+
+	// If the file with the ending down.sql does not exist, then indicate that
+	// this migration is not rolling back.
+	if _, err := os.Stat(migration.Path + version + migratePostfixDown); os.IsNotExist(err) {
+		post.RollFlag = false
+	}
+
+	if err := mStorage.Up(post); err != nil {
+		if errRollback := dbTx.Rollback(); errRollback != nil {
+			return errRollback
+		}
+
+		return fmt.Errorf("storage up: %w", err)
+	}
+
+	return dbTx.Commit()
 }

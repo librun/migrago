@@ -70,7 +70,6 @@ func (db *DB) Close() error {
 	return db.connect.Close()
 }
 
-
 // Exec executes a query.
 func (t *Tx) Exec(query string) error {
 	if _, err := t.tx.Exec(query); err != nil {
