@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	_ "github.com/ClickHouse/clickhouse-go" // add ClickHouse driver
 	_ "github.com/go-sql-driver/mysql"      // add MySQL driver
@@ -11,7 +13,10 @@ import (
 	"github.com/librun/migrago/internal/config"
 )
 
-const dbTypePostgres = "postgres"
+const (
+	dbTypePostgres   = "postgres"
+	dbTypeClickhouse = "clickhouse"
+)
 
 // Errors.
 var (
@@ -22,6 +27,7 @@ var (
 // underlying connections.
 type DB struct {
 	typeDB  string
+	url     *url.URL
 	connect *sql.DB
 }
 
@@ -31,22 +37,23 @@ func NewDB(cfg *config.Database) (*DB, error) {
 		typeDB: cfg.TypeDB,
 	}
 
-	if !CheckSupportDatabaseType(cfg.TypeDB) {
-		return &db, ErrUnsupportedDB
+	var errURLParse error
+	if db.url, errURLParse = url.Parse(cfg.DSN); errURLParse != nil {
+		return nil, errURLParse
 	}
 
-	connect, err := sql.Open(cfg.TypeDB, cfg.DSN)
-	if err != nil {
-		return &db, fmt.Errorf("connect: %w", err)
+	if !db.checkSupportDatabaseType() {
+		return nil, ErrUnsupportedDB
 	}
 
-	if cfg.TypeDB == dbTypePostgres && cfg.Schema != "" {
-		if _, err := connect.Exec("SET search_path TO " + cfg.Schema); err != nil {
-			return nil, fmt.Errorf("exec: %w", err)
-		}
+	var errConnect error
+	if db.connect, errConnect = sql.Open(db.typeDB, db.getDSN()); errConnect != nil {
+		return nil, fmt.Errorf("connect: %w", errConnect)
 	}
 
-	db.connect = connect
+	if err := db.runAfterConnect(cfg); err != nil {
+		return nil, fmt.Errorf("exec: %w", err)
+	}
 
 	return &db, nil
 }
@@ -72,4 +79,83 @@ func (db *DB) Exec(query string) error {
 // Close closes connection.
 func (db *DB) Close() error {
 	return db.connect.Close()
+}
+
+func (db *DB) checkSupportDatabaseType() bool {
+	support := false
+
+	for _, dbDriver := range sql.Drivers() {
+		if dbDriver == db.typeDB {
+			support = true
+
+			break
+		}
+
+		if dbDriver == db.url.Scheme {
+			support = true
+			db.typeDB = db.url.Scheme
+
+			break
+		}
+	}
+
+	return support
+}
+
+func (db *DB) runAfterConnect(cfg *config.Database) error {
+	if db.typeDB == dbTypePostgres {
+		schema := db.url.Query().Get("schema")
+
+		if schema == "" {
+			schema = cfg.Schema
+		}
+
+		if schema != "" {
+			if _, err := db.connect.Exec("SET search_path TO " + cfg.Schema); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (db *DB) getDSN() string {
+	switch db.typeDB {
+	case dbTypePostgres:
+		q := db.url.Query()
+		q.Del("schema")
+
+		db.url.RawQuery = q.Encode()
+
+	case dbTypeClickhouse:
+		u := db.url
+		u.Scheme = "tcp"
+		q := db.url.Query()
+
+		if u.User.Username() != "" {
+			q.Set("username", u.User.Username())
+		}
+
+		if pas, set := u.User.Password(); set {
+			q.Set("password", pas)
+		}
+
+		u.User = nil
+
+		dbName := db.GetDatabaseName()
+		u.Path = ""
+
+		q.Set("database", dbName)
+
+		db.url = u
+		db.url.RawQuery = q.Encode()
+	}
+
+	return db.url.String()
+}
+
+// GetDatabaseName get database name.
+func (db *DB) GetDatabaseName() string {
+	return strings.TrimLeft(db.url.Path, "/")
 }

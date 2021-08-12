@@ -31,9 +31,9 @@ type (
 	// Database struct for Database connection.
 	Database struct {
 		Name   string
-		TypeDB string
+		TypeDB string // TODO: Deprecated
 		DSN    string
-		Schema string
+		Schema string // TODO: Deprecated
 	}
 
 	// YAMLConfig takes configuration values from YAML file.
