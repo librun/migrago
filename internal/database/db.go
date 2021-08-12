@@ -16,6 +16,7 @@ import (
 const (
 	dbTypePostgres   = "postgres"
 	dbTypeClickhouse = "clickhouse"
+	dbTypeMysql      = "mysql"
 )
 
 // Errors.
@@ -45,6 +46,8 @@ func NewDB(cfg *config.Database) (*DB, error) {
 	if !db.checkSupportDatabaseType() {
 		return nil, ErrUnsupportedDB
 	}
+
+	println(db.getDSN())
 
 	var errConnect error
 	if db.connect, errConnect = sql.Open(db.typeDB, db.getDSN()); errConnect != nil {
@@ -90,13 +93,6 @@ func (db *DB) checkSupportDatabaseType() bool {
 
 			break
 		}
-
-		if dbDriver == db.url.Scheme {
-			support = true
-			db.typeDB = db.url.Scheme
-
-			break
-		}
 	}
 
 	return support
@@ -129,27 +125,26 @@ func (db *DB) getDSN() string {
 		db.url.RawQuery = q.Encode()
 
 	case dbTypeClickhouse:
-		u := db.url
-		u.Scheme = "tcp"
 		q := db.url.Query()
 
-		if u.User.Username() != "" {
-			q.Set("username", u.User.Username())
+		if db.url.User.Username() != "" {
+			q.Set("username", db.url.User.Username())
 		}
 
-		if pas, set := u.User.Password(); set {
+		if pas, set := db.url.User.Password(); set {
 			q.Set("password", pas)
 		}
 
-		u.User = nil
+		db.url.User = nil
 
 		dbName := db.GetDatabaseName()
-		u.Path = ""
+		db.url.Path = ""
 
 		q.Set("database", dbName)
 
-		db.url = u
 		db.url.RawQuery = q.Encode()
+	case dbTypeMysql:
+		// TODO: реализовать
 	}
 
 	return db.url.String()

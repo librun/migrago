@@ -31,7 +31,7 @@ type (
 	// Database struct for Database connection.
 	Database struct {
 		Name   string
-		TypeDB string // TODO: Deprecated
+		TypeDB string
 		DSN    string
 		Schema string // TODO: Deprecated
 	}
