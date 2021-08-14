@@ -7,13 +7,35 @@ migration_storage:
 projects:
   project1:
     migrations:
-    - example_database_postgresql: example/migrations/postgres
-  
+      - example_database_postgresql: example/migrations/postgres
+      - example_database_clickhouse: example/migrations/postgres
+      - example_database_mysql: example/migrations/postgres
+      - example_database_postgresql_deprecated: example/migrations/postgres
+      - example_database_clickhouse_deprecated: example/migrations/postgres
+      - example_database_mysql_deprecated: example/migrations/postgres
+
 databases:
   example_database_postgresql:
     type: postgres
-    dsn: "postgres://postgres:postgres@localhost/postgres?sslmode=disable"
-    schema: "test"
+    dsn: "postgres://user:password@localhost:5432/database?sslmode=disable&schema=test"
+
   example_database_clickhouse:
     type: clickhouse
-    dsn: "tcp://host1:9000?username=user&password=qwerty&database=clicks"
+    dsn: "tcp://user:password@localhost:9000/database"
+
+  example_database_mysql:
+    type: mysql
+    dsn: "tcp://user:password@localhost:3306/mysql"
+
+  example_database_postgresql_deprecated:
+    type: postgres
+    dsn: "postgres://user:password@localhost/database?sslmode=disable"
+    schema: "test"
+
+  example_database_clickhouse_deprecated:
+    type: clickhouse
+    dsn: "tcp://localhost:9000?username=user&password=password&database=database"
+
+  example_database_mysql_deprecated:
+    type: mysql
+    dsn: "user:password@tcp(localhost:3306)/database"
