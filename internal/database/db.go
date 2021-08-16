@@ -11,7 +11,11 @@ import (
 	"github.com/librun/migrago/internal/config"
 )
 
-const dbTypePostgres = "postgres"
+const (
+	dbTypePostgres   = "postgres"
+	dbTypeClickhouse = "clickhouse"
+	dbTypeMysql      = "mysql"
+)
 
 // Errors.
 var (
@@ -20,33 +24,56 @@ var (
 
 // DB is a database handle representing a pool of zero or more
 // underlying connections.
-type DB struct {
-	typeDB  string
-	connect *sql.DB
-}
+type (
+	DB struct {
+		typeDB  string
+		connect *sql.DB
+		pDSN    parserDSN
+	}
 
-// NewDB initializes connection to database.
+	parserDSN interface {
+		Parse(*config.Database) error
+		GetDSN() string
+		GetDatabaseName() string
+		RunAfterConnect(*sql.DB) error
+	}
+)
+
+// NewDBConnect initializes connection to database.
 func NewDB(cfg *config.Database) (*DB, error) {
 	db := DB{
 		typeDB: cfg.TypeDB,
 	}
 
-	if !CheckSupportDatabaseType(cfg.TypeDB) {
-		return &db, ErrUnsupportedDB
+	if pDSN, errGetPDSN := db.getParserDSN(cfg); errGetPDSN == nil {
+		db.pDSN = pDSN
+	} else {
+		return nil, errGetPDSN
 	}
 
-	connect, err := sql.Open(cfg.TypeDB, cfg.DSN)
-	if err != nil {
-		return &db, fmt.Errorf("connect: %w", err)
+	var errConnect error
+	if db.connect, errConnect = sql.Open(db.typeDB, db.pDSN.GetDSN()); errConnect != nil {
+		return nil, fmt.Errorf("connect: %w", errConnect)
 	}
 
-	if cfg.TypeDB == dbTypePostgres && cfg.Schema != "" {
-		if _, err := connect.Exec("SET search_path TO " + cfg.Schema); err != nil {
-			return nil, fmt.Errorf("exec: %w", err)
-		}
+	if err := db.pDSN.RunAfterConnect(db.connect); err != nil {
+		return nil, fmt.Errorf("exec: %w", err)
 	}
 
-	db.connect = connect
+	return &db, nil
+}
+
+// NewDBWithoutConnect initializes database without connect.
+func NewDBWithoutConnect(cfg *config.Database) (*DB, error) {
+	db := DB{
+		typeDB: cfg.TypeDB,
+	}
+
+	if pDSN, errGetPDSN := db.getParserDSN(cfg); errGetPDSN == nil {
+		db.pDSN = pDSN
+	} else {
+		return nil, errGetPDSN
+	}
 
 	return &db, nil
 }
@@ -72,4 +99,47 @@ func (db *DB) Exec(query string) error {
 // Close closes connection.
 func (db *DB) Close() error {
 	return db.connect.Close()
+}
+
+// GetDatabaseName get database name.
+func (db *DB) GetDatabaseName() string {
+	return db.pDSN.GetDatabaseName()
+}
+
+func (db *DB) getParserDSN(cfg *config.Database) (parserDSN, error) {
+	support := false
+
+	for _, dbDriver := range sql.Drivers() {
+		if dbDriver == db.typeDB {
+			support = true
+
+			break
+		}
+	}
+
+	if support {
+		var dbConnect parserDSN
+
+		switch db.typeDB {
+		case dbTypePostgres:
+			dbConnect = &parserDSNPostgres{}
+
+		case dbTypeClickhouse:
+			dbConnect = &parserDSNClickhouse{}
+
+		case dbTypeMysql:
+			dbConnect = &parserDSNMysql{}
+
+		default:
+			return nil, ErrUnsupportedDB
+		}
+
+		if err := dbConnect.Parse(cfg); err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+
+		return dbConnect, nil
+	}
+
+	return nil, ErrUnsupportedDB
 }

@@ -33,7 +33,7 @@ type (
 		Name   string
 		TypeDB string
 		DSN    string
-		Schema string
+		Schema string // TODO: Deprecated
 	}
 
 	// YAMLConfig takes configuration values from YAML file.

@@ -87,7 +87,7 @@ func makeMigrationInDB(mStorage storage.Storage, migration config.ProjectMigrati
 
 	dbc, errDB := database.NewDB(migration.Database)
 	if errDB != nil {
-		return countCompleted, errDB
+		return countCompleted, fmt.Errorf("conntect to db: %w", errDB)
 	}
 
 	defer func() {
