@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/librun/migrago/internal/config"
 )
@@ -11,6 +12,7 @@ import (
 type parserDSNMysql struct {
 	dsn    string
 	dbName string
+	params string
 }
 
 // nolint: lll
@@ -51,13 +53,21 @@ func (p *parserDSNMysql) Parse(cfg *config.Database) error {
 		host = protocol + "(" + host + ")"
 	}
 
-	p.dsn = dsn + host + "/" + p.dbName + parseResult[0][12]
+	p.dsn = dsn + host
+
+	p.params = strings.TrimLeft(parseResult[0][12], "?")
 
 	return nil
 }
 
 func (p *parserDSNMysql) GetDSN() string {
-	return p.dsn
+	params := p.params
+
+	if params != "" {
+		params = "?" + params
+	}
+
+	return p.dsn + "/" + p.dbName + params
 }
 
 func (p *parserDSNMysql) RunAfterConnect(connect *sql.DB) error {

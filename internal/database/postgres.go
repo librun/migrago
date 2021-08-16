@@ -12,6 +12,7 @@ type parserDSNPostgres struct {
 	dsn    string
 	schema string
 	dbName string
+	params string
 }
 
 func (p *parserDSNPostgres) Parse(cfg *config.Database) error {
@@ -27,17 +28,30 @@ func (p *parserDSNPostgres) Parse(cfg *config.Database) error {
 
 	q := u.Query()
 	q.Del("schema")
-	u.RawQuery = q.Encode()
-
-	p.dsn = u.String()
+	p.params = q.Encode()
 
 	p.dbName = strings.TrimLeft(u.Path, "/")
+
+	u.RawQuery = ""
+	u.Path = ""
+	p.dsn = u.String()
 
 	return nil
 }
 
 func (p *parserDSNPostgres) GetDSN() string {
-	return p.dsn
+	params := p.params
+
+	if params != "" {
+		params = "?" + params
+	}
+
+	dbName := p.dbName
+	if dbName != "" {
+		dbName = "/" + dbName
+	}
+
+	return p.dsn + dbName + params
 }
 
 func (p *parserDSNPostgres) RunAfterConnect(connect *sql.DB) error {

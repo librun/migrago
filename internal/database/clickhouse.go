@@ -11,6 +11,7 @@ import (
 type parserDSNClickhouse struct {
 	dsn    string
 	dbName string
+	params string
 }
 
 func (p *parserDSNClickhouse) Parse(cfg *config.Database) error {
@@ -40,18 +41,29 @@ func (p *parserDSNClickhouse) Parse(cfg *config.Database) error {
 
 	q.Del("database")
 
-	if p.dbName != "" {
-		q.Set("database", p.dbName)
-	}
-
-	u.RawQuery = q.Encode()
+	p.params = q.Encode()
+	u.RawQuery = ""
 	p.dsn = u.String()
 
 	return nil
 }
 
 func (p *parserDSNClickhouse) GetDSN() string {
-	return p.dsn
+	params := p.params
+
+	if p.dbName != "" {
+		if params != "" {
+			params += "&"
+		}
+
+		params += "database=" + p.dbName
+	}
+
+	if params != "" {
+		params = "?" + params
+	}
+
+	return p.dsn + params
 }
 
 func (p *parserDSNClickhouse) RunAfterConnect(connect *sql.DB) error {
